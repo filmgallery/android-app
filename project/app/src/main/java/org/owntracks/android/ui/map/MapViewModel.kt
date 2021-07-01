@@ -92,7 +92,7 @@ class MapViewModel @Inject constructor(
 
     override fun refreshMarkers() {
         for (c in contactsRepo.all.value!!.values) {
-            view!!.updateMarker(c)
+            view?.updateMarker(c)
         }
     }
 
@@ -175,7 +175,7 @@ class MapViewModel @Inject constructor(
     }
 
     override fun onBottomSheetClick() {
-        view!!.setBottomSheetExpanded() // TODO use an observable
+        view?.setBottomSheetExpanded() // TODO use an observable
     }
 
     override fun onMenuCenterDeviceClicked() {
@@ -201,12 +201,12 @@ class MapViewModel @Inject constructor(
             clearActiveContact()
             setViewModeFree()
         }
-        view!!.removeMarker(c.contact)
+        view?.removeMarker(c.contact)
     }
 
     @Subscribe(threadMode = ThreadMode.MAIN)
     fun onEvent(c: FusedContact) {
-        view!!.updateMarker(c)
+        view?.updateMarker(c)
         if (c == mutableLiveContact.value) {
             mutableLiveContact.postValue(c)
             if (c.latLng != null) {
@@ -257,14 +257,14 @@ class MapViewModel @Inject constructor(
     @Subscribe(threadMode = ThreadMode.MAIN)
     @Suppress("UNUSED_PARAMETER")
     fun onEvent(e: ModeChanged?) {
-        view!!.clearMarkers()
+        view?.clearMarkers()
         clearActiveContact()
     }
 
     @Suppress("UNUSED_PARAMETER")
     @Subscribe(threadMode = ThreadMode.MAIN)
     fun onEvent(e: MonitoringChanged?) {
-        view!!.updateMonitoringModeMenu()
+        view?.updateMonitoringModeMenu()
     }
 
     override fun onMapClick() {

@@ -17,7 +17,7 @@ import javax.inject.Inject
 class EditorViewModel @Inject constructor(
     private val preferences: Preferences,
     private val parser: Parser
-) : BaseViewModel<EditorMvvm.View?>(), EditorMvvm.ViewModel<EditorMvvm.View?> {
+) : BaseViewModel<EditorMvvm.View>(), EditorMvvm.ViewModel<EditorMvvm.View> {
     @get:Bindable
     @Bindable
     override var effectiveConfiguration: String? = null
@@ -27,8 +27,8 @@ class EditorViewModel @Inject constructor(
     @Inject
     lateinit var waypointsRepo: WaypointsRepo
 
-    override fun attachView(savedInstanceState: Bundle?, view: EditorMvvm.View?) {
-        super.attachView(savedInstanceState, view!!)
+    override fun attachView(savedInstanceState: Bundle?, view: EditorMvvm.View) {
+        super.attachView(savedInstanceState, view)
         updateEffectiveConfiguration()
     }
 
@@ -40,7 +40,7 @@ class EditorViewModel @Inject constructor(
             setEffectiveConfiguration(parser.toUnencryptedJsonPretty(message))
         } catch (e: IOException) {
             Timber.e(e)
-            view!!.displayLoadFailed()
+            view?.displayLoadFailed()
         }
     }
 

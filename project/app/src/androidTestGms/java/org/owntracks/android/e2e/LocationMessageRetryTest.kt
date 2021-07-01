@@ -44,6 +44,7 @@ class LocationMessageRetryTest {
 
     @Before
     fun startMockWebserver() {
+        mockWebServer.shutdown()
         mockWebServer.start()
         mockWebServer.dispatcher = MockWebserverLocationDispatcher(locationResponse)
     }
@@ -71,7 +72,7 @@ class LocationMessageRetryTest {
     """.trimIndent()
 
     @Test
-    @AllowFlaky(attempts = 1)
+    @AllowFlaky(attempts = 3)
     fun testReportingLocationSucceedsAfterSomeFailures() {
         baristaRule.launchActivity()
 

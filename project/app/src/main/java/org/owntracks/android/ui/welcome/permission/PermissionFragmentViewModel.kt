@@ -8,7 +8,7 @@ import javax.inject.Inject
 
 @ActivityScoped
 class PermissionFragmentViewModel @Inject internal constructor() :
-    BaseViewModel<PermissionFragmentMvvm.View?>() {
+    BaseViewModel<PermissionFragmentMvvm.View>() {
     @get:Bindable
     var isPermissionGranted = false
         set(permissionGranted) {
@@ -24,7 +24,7 @@ class PermissionFragmentViewModel @Inject internal constructor() :
         }
 
     fun onFixClicked() {
-        view!!.requestFix()
+        view?.requestFix()
     }
 }
 

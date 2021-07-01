@@ -16,13 +16,9 @@ import org.owntracks.android.ui.welcome.version.VersionFragment
 @InstallIn(SingletonComponent::class)
 @Module
 abstract class WelcomeActivityModule {
-//    @Binds
-//    @ActivityScoped
-//    abstract fun bindActivity(a: WelcomeActivity?): AppCompatActivity?
-
     @Binds
     @ActivityScoped
-    abstract fun bindViewModel(viewModel: WelcomeViewModel?): BaseViewModel<WelcomeMvvm.View?>?
+    abstract fun bindViewModel(viewModel: WelcomeViewModel?): BaseViewModel<WelcomeMvvm.View>?
 
     @Binds
     @ActivityScoped
