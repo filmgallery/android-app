@@ -58,12 +58,12 @@ public class LocationProcessor {
 
     public void publishLocationMessage(@Nullable String trigger) {
         Timber.v("trigger: %s. ThreadID: %s", trigger, Thread.currentThread());
-        if (!locationRepo.hasLocation()) {
+        if (locationRepo.getCurrentLocation().getValue() == null) {
             Timber.e("no location available");
             return;
         }
 
-        Location currentLocation = locationRepo.getCurrentLocation();
+        Location currentLocation = locationRepo.getCurrentLocation().getValue();
         List<WaypointModel> loadedWaypoints = waypointsRepo.getAllWithGeofences();
 
         assert currentLocation != null;

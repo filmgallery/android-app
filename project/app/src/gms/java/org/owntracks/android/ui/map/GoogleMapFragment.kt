@@ -94,25 +94,15 @@ class GoogleMapFragment internal constructor() : MapFragment(), OnMapReadyCallba
 
             setMapStyle()
 
-            if (locationRepo?.currentLocation != null) {
-                moveCamera(
-                    CameraUpdateFactory.newLatLngZoom(
-                        LatLng(
-                            locationRepo!!.currentLocation!!.latitude,
-                            locationRepo!!.currentLocation!!.longitude
-                        ), ZOOM_LEVEL_STREET
-                    )
+            val zoomLocation =
+                locationRepo?.currentLocation?.value?.run { LatLng(latitude, longitude) } ?: LatLng(
+                    MapActivity.STARTING_LATITUDE,
+                    MapActivity.STARTING_LONGITUDE
                 )
-            } else {
-                moveCamera(
-                    CameraUpdateFactory.newLatLngZoom(
-                        LatLng(
-                            MapActivity.STARTING_LATITUDE,
-                            MapActivity.STARTING_LONGITUDE
-                        ), ZOOM_LEVEL_STREET
-                    )
-                )
-            }
+
+            moveCamera(
+                CameraUpdateFactory.newLatLngZoom(zoomLocation, ZOOM_LEVEL_STREET)
+            )
 
             setOnMarkerClickListener {
                 it.tag?.run { (activity as MapActivity).onMarkerClicked(this as String) }

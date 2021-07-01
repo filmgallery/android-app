@@ -13,7 +13,6 @@ class Events {
     class MonitoringChanged : E()
     class EndpointChanged : E()
     class PermissionGranted(val permission: String) : E()
-    class ServiceStarted : E()
 
     open class WaypointEvent internal constructor(val waypointModel: WaypointModel) : E()
     class WaypointAdded(m: WaypointModel) : WaypointEvent(m)

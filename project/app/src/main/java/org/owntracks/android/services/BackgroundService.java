@@ -202,7 +202,6 @@ public class BackgroundService extends LifecycleService implements OnModeChanged
         setupGeofences();
 
         eventBus.register(this);
-        eventBus.postSticky(new Events.ServiceStarted());
 
         messageProcessor.initialize();
 
@@ -231,6 +230,8 @@ public class BackgroundService extends LifecycleService implements OnModeChanged
             updateOngoingNotification();
         });
         endpointStateRepo.getEndpointState().observe(this, state -> updateOngoingNotification());
+
+        endpointStateRepo.setServiceStartedNow();
 
         return START_STICKY;
     }

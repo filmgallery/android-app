@@ -2,6 +2,7 @@ package org.owntracks.android.data.repos
 
 import androidx.lifecycle.MutableLiveData
 import org.owntracks.android.data.EndpointState
+import java.util.*
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -15,9 +16,17 @@ class EndpointStateRepo @Inject constructor() {
         endpointQueueLength.postValue(queueLength);
     }
 
-    val endpointState: MutableLiveData<EndpointState> = //TODO migrate this to Kotlin flow once we get AGP 7
+    fun setServiceStartedNow() {
+        serviceStartedDate.postValue(Date())
+    }
+
+    val endpointState: MutableLiveData<EndpointState> =
+        //TODO migrate this to Kotlin flow once we get AGP 7
         MutableLiveData(EndpointState.IDLE)
 
     val endpointQueueLength: MutableLiveData<Int> =
         MutableLiveData(0)
+
+    val serviceStartedDate: MutableLiveData<Date> =
+        MutableLiveData()
 }
