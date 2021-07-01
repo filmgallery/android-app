@@ -20,10 +20,11 @@ import org.jetbrains.annotations.NotNull;
 import org.json.JSONException;
 import org.json.JSONObject;
 import org.owntracks.android.R;
+import org.owntracks.android.data.EndpointState;
+import org.owntracks.android.data.repos.EndpointStateRepo;
 import org.owntracks.android.model.messages.MessageBase;
 import org.owntracks.android.model.messages.MessageCard;
 import org.owntracks.android.model.messages.MessageClear;
-import org.owntracks.android.services.MessageProcessor.EndpointState;
 import org.owntracks.android.services.worker.Scheduler;
 import org.owntracks.android.support.Events;
 import org.owntracks.android.support.Parser;
@@ -65,7 +66,7 @@ public class MessageProcessorEndpointMqtt extends MessageProcessorEndpoint imple
     private CustomMqttClient mqttClient;
 
     private String lastConnectionId;
-    private static MessageProcessor.EndpointState state;
+    private static EndpointState state;
 
     private MessageProcessor messageProcessor;
     private RunThingsOnOtherThreads runThingsOnOtherThreads;
@@ -76,7 +77,7 @@ public class MessageProcessorEndpointMqtt extends MessageProcessorEndpoint imple
     private Scheduler scheduler;
     private EventBus eventBus;
 
-    MessageProcessorEndpointMqtt(MessageProcessor messageProcessor, Parser parser, Preferences preferences, Scheduler scheduler, EventBus eventBus, RunThingsOnOtherThreads runThingsOnOtherThreads, Context applicationContext) {
+    MessageProcessorEndpointMqtt(MessageProcessor messageProcessor, Parser parser, Preferences preferences, Scheduler scheduler, EventBus eventBus, RunThingsOnOtherThreads runThingsOnOtherThreads, Context applicationContext, EndpointStateRepo endpointStateRepo) {
         super(messageProcessor);
         this.parser = parser;
         this.preferences = preferences;

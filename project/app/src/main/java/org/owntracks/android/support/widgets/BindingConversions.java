@@ -8,12 +8,13 @@ import androidx.annotation.Nullable;
 import androidx.databinding.BindingAdapter;
 import androidx.databinding.BindingConversion;
 import androidx.databinding.InverseMethod;
+import androidx.lifecycle.LiveData;
 
 import com.rengwuxian.materialedittext.MaterialEditText;
 
 import org.owntracks.android.R;
+import org.owntracks.android.data.EndpointState;
 import org.owntracks.android.location.geofencing.Geofence;
-import org.owntracks.android.services.MessageProcessor;
 import org.owntracks.android.services.MessageProcessorEndpointHttp;
 import org.owntracks.android.services.MessageProcessorEndpointMqtt;
 
@@ -70,10 +71,11 @@ public class BindingConversions {
         return convertToInteger(d);
     }
 
+
     // Misc
     @BindingAdapter({"android:text"})
-    public static void setText(TextView view, MessageProcessor.EndpointState state) {
-        view.setText(state != null ? state.getLabel(view.getContext()) : view.getContext().getString(R.string.na));
+    public static void setText(TextView view, LiveData<EndpointState> state) {
+        view.setText((state != null && state.getValue() != null) ? state.getValue().getLabel(view.getContext()) : view.getContext().getString(R.string.na));
     }
 
     @BindingAdapter("met_helperText")

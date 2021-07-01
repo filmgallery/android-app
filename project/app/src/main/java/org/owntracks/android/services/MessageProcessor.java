@@ -1,15 +1,15 @@
 package org.owntracks.android.services;
 
 import android.content.Context;
-import android.content.res.Resources;
 
 import androidx.test.espresso.idling.CountingIdlingResource;
 
-import org.eclipse.paho.client.mqttv3.MqttException;
 import org.greenrobot.eventbus.EventBus;
 import org.greenrobot.eventbus.Subscribe;
 import org.greenrobot.eventbus.ThreadMode;
+import org.owntracks.android.data.EndpointState;
 import org.owntracks.android.data.repos.ContactsRepo;
+import org.owntracks.android.data.repos.EndpointStateRepo;
 import org.owntracks.android.data.repos.WaypointsRepo;
 import org.owntracks.android.model.messages.MessageBase;
 import org.owntracks.android.model.messages.MessageCard;
@@ -28,7 +28,6 @@ import org.owntracks.android.support.interfaces.ConfigurationIncompleteException
 import org.owntracks.android.support.interfaces.StatefulServiceMessageProcessor;
 
 import java.io.IOException;
-import java.util.Locale;
 import java.util.concurrent.BlockingDeque;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
@@ -54,9 +53,9 @@ public class MessageProcessor {
     private final Scheduler scheduler;
     private final Lazy<LocationProcessor> locationProcessorLazy;
 
-    private final Events.QueueChanged queueEvent = new Events.QueueChanged();
     private final ServiceBridge serviceBridge;
     private final CountingIdlingResource outgoingQueueIdlingResource;
+    private EndpointStateRepo endpointStateRepo;
     private final RunThingsOnOtherThreads runThingsOnOtherThreads;
     private MessageProcessorEndpoint endpoint;
 
@@ -81,7 +80,8 @@ public class MessageProcessor {
             ServiceBridge serviceBridge,
             RunThingsOnOtherThreads runThingsOnOtherThreads,
             CountingIdlingResource outgoingQueueIdlingResource,
-            Lazy<LocationProcessor> locationProcessorLazy
+            Lazy<LocationProcessor> locationProcessorLazy,
+            EndpointStateRepo endpointStateRepo
     ) {
         this.applicationContext = applicationContext;
         this.preferences = preferences;
@@ -93,6 +93,7 @@ public class MessageProcessor {
         this.locationProcessorLazy = locationProcessorLazy;
         this.serviceBridge = serviceBridge;
         this.outgoingQueueIdlingResource = outgoingQueueIdlingResource;
+        this.endpointStateRepo = endpointStateRepo;
         this.eventBus.register(this);
         this.runThingsOnOtherThreads = runThingsOnOtherThreads;
 
@@ -180,7 +181,7 @@ public class MessageProcessor {
             endpoint.onDestroy();
         }
 
-        eventBus.postSticky(queueEvent.withNewLength(outgoingQueue.size()));
+        endpointStateRepo.setQueueLength(outgoingQueue.size());
 
         switch (preferences.getMode()) {
             case MessageProcessorEndpointHttp.MODE_ID:
@@ -188,7 +189,7 @@ public class MessageProcessor {
                 break;
             case MessageProcessorEndpointMqtt.MODE_ID:
             default:
-                this.endpoint = new MessageProcessorEndpointMqtt(this, this.parser, this.preferences, this.scheduler, this.eventBus, this.runThingsOnOtherThreads, this.applicationContext);
+                this.endpoint = new MessageProcessorEndpointMqtt(this, this.parser, this.preferences, this.scheduler, this.eventBus, this.runThingsOnOtherThreads, this.applicationContext, this.endpointStateRepo);
 
         }
 
@@ -215,7 +216,7 @@ public class MessageProcessor {
                 }
             }
         }
-        eventBus.postSticky(queueEvent.withNewLength(outgoingQueue.size()));
+        endpointStateRepo.setQueueLength(outgoingQueue.size());
     }
 
     // Should be on the background thread here, because we block
@@ -324,23 +325,23 @@ public class MessageProcessor {
 
     void onMessageDelivered(MessageBase messageBase) {
         Timber.d("onMessageDelivered in MessageProcessor Noop. ThreadID: %s", Thread.currentThread());
-        eventBus.postSticky(queueEvent.withNewLength(outgoingQueue.size()));
+        endpointStateRepo.setQueueLength(outgoingQueue.size());
         eventBus.post(messageBase);
     }
 
     void onMessageDeliveryFailedFinal(String messageId) {
         Timber.e("Message delivery failed, not retryable. :%s", messageId);
-        eventBus.postSticky(queueEvent.withNewLength(outgoingQueue.size()));
+        endpointStateRepo.setQueueLength(outgoingQueue.size());
     }
 
     void onMessageDeliveryFailed(String messageId) {
         Timber.e("Message delivery failed. queueLength: %s, messageId: %s", outgoingQueue.size() + 1, messageId);
-        eventBus.postSticky(queueEvent.withNewLength(outgoingQueue.size() + 1)); // Failed message hasn't been re-queued yet, so add 1
+        endpointStateRepo.setQueueLength(outgoingQueue.size() + 1); // Failed message hasn't been re-queued yet, so add 1
     }
 
     void onEndpointStateChanged(EndpointState newState) {
         Timber.d("message:%s, ", newState.getMessage());
-        eventBus.postSticky(newState);
+        endpointStateRepo.setState(newState);
     }
 
     public void processIncomingMessage(MessageBase message) {
@@ -457,62 +458,6 @@ public class MessageProcessor {
         Timber.d("Interrupting background sending thread");
         backgroundDequeueThread.interrupt();
     }
-
-    public enum EndpointState {
-        INITIAL,
-        IDLE,
-        CONNECTING,
-        CONNECTED,
-        DISCONNECTING,
-        DISCONNECTED,
-        DISCONNECTED_USERDISCONNECT,
-        ERROR,
-        ERROR_DATADISABLED,
-        ERROR_CONFIGURATION;
-
-        String message;
-        private Throwable error;
-
-        public String getMessage() {
-            if (message == null) {
-                if (error != null) {
-                    if (error instanceof MqttException && error.getCause() != null) {
-                        if (error.getMessage() != null && error.getMessage().equals("MqttException")) {
-                            return String.format("MQTT Error: %s", error.getCause().getMessage());
-                        }
-                        return String.format("MQTT Error: %s", error.getMessage());
-                    }
-                    return error.getMessage();
-                }
-                return null;
-            } else if (error != null) {
-                return String.format(Locale.ROOT, "%s: %s", message, error.getMessage());
-            }
-            return message;
-        }
-
-        public Throwable getError() {
-            return error;
-        }
-
-        public EndpointState withMessage(String message) {
-            this.message = message;
-            return this;
-        }
-
-
-        public String getLabel(Context context) {
-            Resources res = context.getResources();
-            int resId = res.getIdentifier(this.name(), "string", context.getPackageName());
-            if (0 != resId) {
-                return (res.getString(resId));
-            }
-            return (name());
-        }
-
-        public EndpointState withError(Throwable error) {
-            this.error = error;
-            return this;
-        }
-    }
 }
+
+

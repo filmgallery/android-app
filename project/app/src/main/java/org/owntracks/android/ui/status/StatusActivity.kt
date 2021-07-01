@@ -7,12 +7,13 @@ import org.owntracks.android.databinding.UiStatusBinding
 import org.owntracks.android.ui.base.BaseActivity
 
 @AndroidEntryPoint
-class StatusActivity : BaseActivity<UiStatusBinding?, StatusMvvm.ViewModel<StatusMvvm.View?>?>(),
+class StatusActivity : BaseActivity<UiStatusBinding?, StatusViewModel>(),
     StatusMvvm.View {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         bindAndAttachContentView(R.layout.ui_status, savedInstanceState)
         setSupportToolbar(binding!!.appbar.toolbar)
         setDrawer(binding!!.appbar.toolbar)
+        setHasEventBus(false)
     }
 }
