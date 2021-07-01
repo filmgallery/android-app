@@ -746,8 +746,6 @@ public class BackgroundService extends LifecycleService implements OnModeChanged
         return eventsNotificationCompatBuilder;
     }
 
-    private final IBinder mBinder = new LocalBinder();
-
     @Override
     public void onAttachAfterModeChanged() {
         //NOOP. Handled through eventbus
@@ -763,23 +761,5 @@ public class BackgroundService extends LifecycleService implements OnModeChanged
             Timber.d("locator preferences changed. Resetting location request.");
             setupLocationRequest();
         }
-    }
-
-    public class LocalBinder extends Binder {
-        public BackgroundService getService() {
-            return BackgroundService.this;
-        }
-    }
-
-    @Override
-    public IBinder onBind(Intent intent) {
-        super.onBind(intent);
-        Timber.v("in onBind()");
-        return mBinder;
-    }
-
-    @Override
-    public void onRebind(Intent intent) {
-        Timber.v("Last client unbound from service");
     }
 }
