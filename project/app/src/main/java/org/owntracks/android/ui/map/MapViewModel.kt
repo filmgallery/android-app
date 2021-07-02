@@ -7,13 +7,13 @@ import android.location.Location
 import android.os.Bundle
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
-import com.google.android.gms.maps.LocationSource.OnLocationChangedListener
 import dagger.hilt.android.scopes.ActivityScoped
 import kotlinx.coroutines.MainScope
 import kotlinx.coroutines.launch
 import org.greenrobot.eventbus.Subscribe
 import org.greenrobot.eventbus.ThreadMode
 import org.owntracks.android.data.repos.ContactsRepo
+import org.owntracks.android.data.repos.LocationRepo
 import org.owntracks.android.geocoding.GeocoderProvider
 import org.owntracks.android.location.*
 import org.owntracks.android.model.FusedContact
@@ -34,13 +34,12 @@ import kotlin.math.roundToInt
 @ActivityScoped
 class MapViewModel @Inject constructor(
     private val contactsRepo: ContactsRepo,
+    private val locationRepo: LocationRepo,
     private val locationProcessor: LocationProcessor,
     private val messageProcessor: MessageProcessor,
     private val geocoderProvider: GeocoderProvider,
     private val preferences: Preferences
 ) : BaseViewModel<MapMvvm.View>(), MapMvvm.ViewModel<MapMvvm.View> {
-    private var onLocationChangedListener: OnLocationChangedListener? = null
-
     private val mutableLiveContact = MutableLiveData<FusedContact?>()
     private val liveBottomSheetHidden = MutableLiveData<Boolean>()
     private val liveCamera = MutableLiveData<LatLng>()
@@ -104,9 +103,7 @@ class MapViewModel @Inject constructor(
             if (mode == VIEW_DEVICE && liveCamera.value != locationResult.lastLocation.toLatLng()) {
                 liveCamera.postValue(locationResult.lastLocation.toLatLng())
             }
-            if (onLocationChangedListener != null) {
-                onLocationChangedListener!!.onLocationChanged(locationResult.lastLocation)
-            }
+            locationRepo.setMapLocation(locationResult.lastLocation)
         }
 
         override fun onLocationAvailability(locationAvailability: LocationAvailability) {
@@ -235,7 +232,10 @@ class MapViewModel @Inject constructor(
         }
     }
 
-    private fun updateActiveContactDistanceAndBearing(currentLocation: Location, contact: FusedContact) {
+    private fun updateActiveContactDistanceAndBearing(
+        currentLocation: Location,
+        contact: FusedContact
+    ) {
         contact.messageLocation?.run {
             val distanceBetween = FloatArray(2)
             Location.distanceBetween(

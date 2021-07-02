@@ -26,7 +26,7 @@ class StatusViewModel @Inject constructor(
     val endpointState: LiveData<EndpointState> = endpointStateRepo.endpointState
     val endpointQueueLength: LiveData<Int> = endpointStateRepo.endpointQueueLength
     val serviceStarted: LiveData<Date> = endpointStateRepo.serviceStartedDate
-    val currentLocation: LiveData<Location> = locationRepo.currentLocation
+    val currentLocation: LiveData<Location> = locationRepo.currentPublishedLocation
 
     fun getDozeWhitelisted(): Boolean {
         return Build.VERSION.SDK_INT < Build.VERSION_CODES.M ||

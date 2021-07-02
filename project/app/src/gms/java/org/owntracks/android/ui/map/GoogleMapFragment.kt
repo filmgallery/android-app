@@ -95,7 +95,7 @@ class GoogleMapFragment internal constructor() : MapFragment(), OnMapReadyCallba
             setMapStyle()
 
             val zoomLocation =
-                locationRepo?.currentLocation?.value?.run { LatLng(latitude, longitude) } ?: LatLng(
+                locationRepo?.currentPublishedLocation?.value?.run { LatLng(latitude, longitude) } ?: LatLng(
                     MapActivity.STARTING_LATITUDE,
                     MapActivity.STARTING_LONGITUDE
                 )
