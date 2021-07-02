@@ -7,6 +7,8 @@ import android.view.LayoutInflater
 import android.view.MotionEvent.ACTION_BUTTON_RELEASE
 import android.view.View
 import android.view.ViewGroup
+import androidx.core.content.res.ResourcesCompat
+import androidx.core.graphics.drawable.toBitmap
 import androidx.databinding.DataBindingUtil
 import androidx.preference.PreferenceManager
 import dagger.hilt.android.AndroidEntryPoint
@@ -41,7 +43,7 @@ class OSMMapFragment internal constructor() : MapFragment() {
     private var locationRepo: LocationRepo? = null
     private var locationSource: LocationSource? = null
     private var mapView: MapView? = null
-    private var binding: OsmMapFragmentBinding? = null
+    private lateinit var binding: OsmMapFragmentBinding
     override fun onCreateView(
         inflater: LayoutInflater,
         container: ViewGroup?,
@@ -59,21 +61,28 @@ class OSMMapFragment internal constructor() : MapFragment() {
                 locationSource = (activity as MapActivity).mapLocationSource
             }
         }
-        mapView = this.binding!!.osmMapView.apply {
+        mapView = this.binding.osmMapView.apply {
             setTileSource(TileSourceFactory.MAPNIK)
             zoomController.setVisibility(CustomZoomButtonsController.Visibility.SHOW_AND_FADEOUT)
             controller.setZoom(ZOOM_STREET_LEVEL)
             controller.setCenter(GeoPoint(STARTING_LATITUDE, STARTING_LONGITUDE))
 
             locationSource?.also {
-                overlays.add(
-                    MyLocationNewOverlay(
-                        it.toOSMLocationSource(),
-                        this
-                    )
+                val myLocationNewOverlay = MyLocationNewOverlay(
+                    it.toOSMLocationSource(),
+                    this
                 )
+                ResourcesCompat.getDrawable(resources, R.drawable.location_dot, null)
+                    ?.also { drawable ->
+                        val bitmap = drawable.toBitmap(50, 50)
+                        myLocationNewOverlay.setDirectionArrow(
+                            bitmap,
+                            bitmap
+                        )
+                        myLocationNewOverlay.setPersonIcon(bitmap)
+                    }
+                overlays.add(myLocationNewOverlay)
             }
-
 
             setMultiTouchControls(true)
             setOnClickListener {
@@ -89,7 +98,7 @@ class OSMMapFragment internal constructor() : MapFragment() {
         }
         setMapStyle()
         ((requireActivity()) as MapActivity).onMapReady()
-        return binding!!.root
+        return binding.root
     }
 
     fun setMapStyle() {
