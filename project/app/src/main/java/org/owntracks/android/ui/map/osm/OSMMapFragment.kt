@@ -72,15 +72,16 @@ class OSMMapFragment internal constructor() : MapFragment() {
                     it.toOSMLocationSource(),
                     this
                 )
-                ResourcesCompat.getDrawable(resources, R.drawable.location_dot, null)
-                    ?.also { drawable ->
-                        val bitmap = drawable.toBitmap(50, 50)
-                        myLocationNewOverlay.setDirectionArrow(
-                            bitmap,
-                            bitmap
-                        )
-                        myLocationNewOverlay.setPersonIcon(bitmap)
-                    }
+                val arrowBitmap =
+                    ResourcesCompat.getDrawable(resources, R.drawable.location_dot_arrow, null)
+                        ?.toBitmap(50, 50)
+                val dotBitmap =
+                    ResourcesCompat.getDrawable(resources, R.drawable.location_dot, null)
+                        ?.toBitmap(50, 50)
+                myLocationNewOverlay.setDirectionArrow(
+                    dotBitmap,
+                    arrowBitmap
+                )
                 overlays.add(myLocationNewOverlay)
             }
 
