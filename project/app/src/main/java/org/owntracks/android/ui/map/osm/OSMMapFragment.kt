@@ -131,7 +131,7 @@ class OSMMapFragment internal constructor() : MapFragment() {
             if (existingMarker != null) {
                 existingMarker.position = latLng.toGeoPoint()
             } else {
-                overlays.add(Marker(this).apply {
+                overlays.add(0, Marker(this).apply {
                     this.id = id
                     position = latLng.toGeoPoint()
                     infoWindow = null
@@ -139,7 +139,7 @@ class OSMMapFragment internal constructor() : MapFragment() {
                         (activity as MapActivity).onMarkerClicked(marker.id)
                         true
                     }
-                    setAnchor(Marker.ANCHOR_CENTER, Marker.ANCHOR_BOTTOM)
+                    setAnchor(Marker.ANCHOR_CENTER, Marker.ANCHOR_CENTER)
                 })
             }
         }
