@@ -179,7 +179,6 @@ tasks.withType<Test> {
 val okHttpVersion = "4.9.1"
 val jacksonVersion = "2.12.2"
 val materialDialogsVersion = "0.9.6.0"
-val espressoVersion = "3.3.0"
 val androidxTestVersion = "1.4.0"
 val kotlinCoroutinesVersion = "1.4.1"
 val jaxbVersion = "3.0.1"
@@ -192,7 +191,7 @@ dependencies {
     implementation("androidx.work:work-runtime:2.5.0")
     implementation("androidx.fragment:fragment-ktx:1.3.5")
     implementation("androidx.core:core-ktx:1.6.0")
-    implementation("androidx.test.espresso:espresso-idling-resource:${espressoVersion}")
+    implementation("androidx.test.espresso:espresso-idling-resource:3.4.0")
     implementation("androidx.lifecycle:lifecycle-common-java8:2.3.1")
     implementation("androidx.lifecycle:lifecycle-service:2.3.1")
 
@@ -250,10 +249,6 @@ dependencies {
     testImplementation("androidx.test:core:${androidxTestVersion}")
     testImplementation("com.nhaarman.mockitokotlin2:mockito-kotlin:2.2.0")
     testImplementation("android.arch.core:core-testing:1.1.1")
-
-    androidTestImplementation("androidx.test.espresso:espresso-core:${espressoVersion}")
-    androidTestImplementation("androidx.test.espresso:espresso-contrib:${espressoVersion}")
-    androidTestImplementation("androidx.test.espresso:espresso-intents:${espressoVersion}")
 
     androidTestImplementation("androidx.test.ext:junit:1.1.3")
     androidTestImplementation("androidx.test:core-ktx:${androidxTestVersion}")
