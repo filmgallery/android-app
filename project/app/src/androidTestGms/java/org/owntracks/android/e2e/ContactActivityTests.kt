@@ -15,7 +15,6 @@ import com.schibsted.spain.barista.interaction.BaristaClickInteractions.clickBac
 import com.schibsted.spain.barista.interaction.BaristaDialogInteractions.clickDialogPositiveButton
 import com.schibsted.spain.barista.interaction.BaristaDrawerInteractions.openDrawer
 import com.schibsted.spain.barista.interaction.BaristaEditTextInteractions.writeTo
-import com.schibsted.spain.barista.rule.BaristaRule
 import com.schibsted.spain.barista.rule.flaky.AllowFlaky
 import okhttp3.mockwebserver.Dispatcher
 import okhttp3.mockwebserver.MockResponse
@@ -23,33 +22,21 @@ import okhttp3.mockwebserver.MockWebServer
 import okhttp3.mockwebserver.RecordedRequest
 import org.junit.After
 import org.junit.Before
-import org.junit.Rule
 import org.junit.Test
-import org.junit.rules.RuleChain
 import org.junit.runner.RunWith
 import org.owntracks.android.R
-import org.owntracks.android.ScreenshotTakingOnTestEndRule
+import org.owntracks.android.TestWithAnActivity
 import org.owntracks.android.ui.clickOnAndWait
 import org.owntracks.android.ui.map.MapActivity
 
-
 @LargeTest
 @RunWith(AndroidJUnit4::class)
-class ContactActivityTests {
-    @get:Rule
-    var baristaRule = BaristaRule.create(MapActivity::class.java) // We always start e2e at the main entrypoint
-
-    private val screenshotRule = ScreenshotTakingOnTestEndRule()
-
-    @get:Rule
-    val ruleChain: RuleChain = RuleChain
-            .outerRule(baristaRule.activityTestRule)
-            .around(screenshotRule)
-
+class ContactActivityTests : TestWithAnActivity<MapActivity>(MapActivity::class.java) {
     private var mockWebServer = MockWebServer()
 
     @Before
     fun startMockWebserver() {
+        mockWebServer.shutdown()
         mockWebServer.start()
         mockWebServer.dispatcher = MockWebserverLocationDispatcher(locationResponse)
     }
@@ -61,8 +48,12 @@ class ContactActivityTests {
 
     @After
     fun unregisterIdlingResource() {
-        baristaRule.activityTestRule.activity.locationIdlingResource?.run { IdlingRegistry.getInstance().unregister(this) }
-        baristaRule.activityTestRule.activity.outgoingQueueIdlingResource.run { IdlingRegistry.getInstance().unregister(this) }
+        baristaRule.activityTestRule.activity.locationIdlingResource?.run {
+            IdlingRegistry.getInstance().unregister(this)
+        }
+        baristaRule.activityTestRule.activity.outgoingQueueIdlingResource.run {
+            IdlingRegistry.getInstance().unregister(this)
+        }
     }
 
     private val locationResponse = """
@@ -96,7 +87,8 @@ class ContactActivityTests {
 
         clickOnAndWait(R.id.menu_report)
 
-        val networkIdlingResource = baristaRule.activityTestRule.activity.outgoingQueueIdlingResource
+        val networkIdlingResource =
+            baristaRule.activityTestRule.activity.outgoingQueueIdlingResource
         IdlingRegistry.getInstance().register(networkIdlingResource)
 
         openDrawer()
@@ -118,7 +110,8 @@ class ContactActivityTests {
         override fun dispatch(request: RecordedRequest): MockResponse {
             val errorResponse = MockResponse().setResponseCode(404)
             return if (request.path == "/") {
-                MockResponse().setResponseCode(200).setHeader("Content-type", "application/json").setBody(config)
+                MockResponse().setResponseCode(200).setHeader("Content-type", "application/json")
+                    .setBody(config)
             } else {
                 errorResponse
             }

@@ -3,7 +3,6 @@ package org.owntracks.android.ui
 import android.app.Instrumentation
 import android.content.Intent
 import androidx.test.espresso.Espresso.openActionBarOverflowOrOptionsMenu
-import androidx.test.espresso.intent.Intents
 import androidx.test.espresso.intent.Intents.intended
 import androidx.test.espresso.intent.Intents.intending
 import androidx.test.espresso.intent.matcher.IntentMatchers.*
@@ -13,48 +12,18 @@ import com.schibsted.spain.barista.assertion.BaristaVisibilityAssertions.assertC
 import com.schibsted.spain.barista.interaction.BaristaClickInteractions.clickOn
 import com.schibsted.spain.barista.interaction.BaristaDialogInteractions.clickDialogPositiveButton
 import com.schibsted.spain.barista.interaction.BaristaEditTextInteractions.writeTo
-import com.schibsted.spain.barista.rule.BaristaRule
 import com.schibsted.spain.barista.rule.flaky.AllowFlaky
 import org.hamcrest.CoreMatchers.`is`
 import org.hamcrest.CoreMatchers.allOf
-import org.junit.After
-import org.junit.Before
-import org.junit.Rule
 import org.junit.Test
-import org.junit.rules.RuleChain
 import org.junit.runner.RunWith
 import org.owntracks.android.R
-import org.owntracks.android.ScreenshotTakingOnTestEndRule
+import org.owntracks.android.TestWithAnActivity
 import org.owntracks.android.ui.preferences.editor.EditorActivity
 
 @LargeTest
 @RunWith(AndroidJUnit4::class)
-class ConfigEditorActivityTests {
-    @get:Rule
-    var baristaRule = BaristaRule.create(EditorActivity::class.java)
-
-    private val screenshotRule = ScreenshotTakingOnTestEndRule()
-
-    @get:Rule
-    val ruleChain: RuleChain = RuleChain
-        .outerRule(baristaRule.activityTestRule)
-        .around(screenshotRule)
-
-    @Before
-    fun initIntents() {
-        Intents.init()
-    }
-
-    @After
-    fun releaseIntents() {
-        Intents.release()
-    }
-
-    @Before
-    fun setUp() {
-        baristaRule.launchActivity()
-    }
-
+class ConfigEditorActivityTests : TestWithAnActivity<EditorActivity>(EditorActivity::class.java) {
     @Test
     @AllowFlaky(attempts = 1)
     fun configurationManagementCanEditASetType() {

@@ -15,16 +15,13 @@ import com.schibsted.spain.barista.interaction.BaristaDialogInteractions.clickDi
 import com.schibsted.spain.barista.interaction.BaristaDrawerInteractions.openDrawer
 import com.schibsted.spain.barista.interaction.BaristaEditTextInteractions.writeTo
 import com.schibsted.spain.barista.interaction.PermissionGranter
-import com.schibsted.spain.barista.rule.BaristaRule
 import com.schibsted.spain.barista.rule.flaky.AllowFlaky
 import org.junit.FixMethodOrder
-import org.junit.Rule
 import org.junit.Test
-import org.junit.rules.RuleChain
 import org.junit.runner.RunWith
 import org.junit.runners.MethodSorters
 import org.owntracks.android.R
-import org.owntracks.android.ScreenshotTakingOnTestEndRule
+import org.owntracks.android.TestWithAnActivity
 import org.owntracks.android.e2e.doWelcomeProcess
 import org.owntracks.android.support.Preferences
 import org.owntracks.android.ui.clickOnAndWait
@@ -32,17 +29,7 @@ import org.owntracks.android.ui.clickOnAndWait
 @LargeTest
 @RunWith(AndroidJUnit4::class)
 @FixMethodOrder(MethodSorters.NAME_ASCENDING)
-class GMSMapActivityTests {
-    @get:Rule
-    var baristaRule = BaristaRule.create(MapActivity::class.java)
-
-    private val screenshotRule = ScreenshotTakingOnTestEndRule()
-
-    @get:Rule
-    val ruleChain: RuleChain = RuleChain
-        .outerRule(baristaRule.activityTestRule)
-        .around(screenshotRule)
-
+class GMSMapActivityTests : TestWithAnActivity<MapActivity>(MapActivity::class.java) {
     @Test
     @AllowFlaky(attempts = 1)
     fun statusActivityCanBeLaunchedFromMapActivityDrawer() {
