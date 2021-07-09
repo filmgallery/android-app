@@ -186,16 +186,17 @@ val jaxbVersion = "3.0.1"
 dependencies {
     implementation("androidx.preference:preference:1.1.1")
     implementation("com.takisoft.preferencex:preferencex:1.1.0")
-    implementation("com.google.android.material:material:1.4.0")
 
     implementation("androidx.work:work-runtime:2.5.0")
     implementation("androidx.core:core-ktx:1.6.0")
     implementation("androidx.fragment:fragment-ktx:1.3.5")
+
     implementation("androidx.lifecycle:lifecycle-common-java8:2.3.1")
     implementation("androidx.lifecycle:lifecycle-service:2.3.1")
-    implementation("androidx.lifecycle:lifecycle-viewmodel-ktx:2.3.1")
+
     implementation("androidx.test.espresso:espresso-idling-resource:3.4.0")
 
+    implementation("com.google.android.material:material:1.4.0")
 
     // Explicit dependency on conscrypt to give up-to-date TLS support on all devices
     implementation("org.conscrypt:conscrypt-android:2.5.2")

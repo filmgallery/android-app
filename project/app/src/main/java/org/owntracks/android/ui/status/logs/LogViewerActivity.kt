@@ -18,75 +18,80 @@ import android.net.Uri
 import android.os.Bundle
 import android.view.Menu
 import android.view.MenuItem
+import android.view.View
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.activity.viewModels
+import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ShareCompat
+import androidx.databinding.DataBindingUtil
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import dagger.hilt.android.AndroidEntryPoint
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.cancel
 import org.owntracks.android.BuildConfig
 import org.owntracks.android.R
 import org.owntracks.android.databinding.UiPreferencesLogsBinding
-import org.owntracks.android.logging.TimberInMemoryLogTree
-import org.owntracks.android.ui.base.BaseActivity
-import org.owntracks.android.ui.base.view.MvvmView
-import org.owntracks.android.ui.base.viewmodel.NoOpViewModel
-import timber.log.Timber
 import java.util.*
 
 @AndroidEntryPoint
-class LogViewerActivity : BaseActivity<UiPreferencesLogsBinding, NoOpViewModel>(), MvvmView {
-    private val shareIntentActivityLauncher = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) {
-        revokeExportUriPermissions()
-    }
+class LogViewerActivity : AppCompatActivity() {
+    val viewModel: LogViewerViewModel by viewModels()
+
+    private val shareIntentActivityLauncher =
+        registerForActivityResult(ActivityResultContracts.StartActivityForResult()) {
+            revokeExportUriPermissions()
+        }
+
     private lateinit var logAdapter: LogEntryAdapter
     private var logExportUri: Uri? = null
-
-    private val timberInMemoryLogTree = Timber.forest().filterIsInstance(TimberInMemoryLogTree::class.java).first()
     private var recyclerView: RecyclerView? = null
-    private val coroutineScope = CoroutineScope(Dispatchers.Default)
     private var clearButton: MenuItem? = null
 
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        bindAndAttachContentView(R.layout.ui_preferences_logs, savedInstanceState)
-        setSupportToolbar(binding.appbar.toolbar)
-        setHasEventBus(false)
+
+        val binding: UiPreferencesLogsBinding =
+            DataBindingUtil.setContentView(this, R.layout.ui_preferences_logs)
+        binding.lifecycleOwner = this
+
+        setSupportActionBar(binding.appbar.toolbar)
+        supportActionBar?.apply {
+            setDisplayShowHomeEnabled(true)
+            setDisplayHomeAsUpEnabled(true)
+        }
+
         @Suppress("DEPRECATION")
         logAdapter = LogEntryAdapter(
-                LogPalette(
-                        resources.getColor(R.color.primary),
-                        resources.getColor(R.color.log_debug_tag_color),
-                        resources.getColor(R.color.log_info_tag_color),
-                        resources.getColor(R.color.log_warning_tag_color),
-                        resources.getColor(R.color.log_error_tag_color)
-                )
+            LogPalette(
+                resources.getColor(R.color.primary),
+                resources.getColor(R.color.log_debug_tag_color),
+                resources.getColor(R.color.log_info_tag_color),
+                resources.getColor(R.color.log_warning_tag_color),
+                resources.getColor(R.color.log_error_tag_color)
+            )
         )
+        logAdapter.setLogLines(viewModel.logLines(), viewModel.isDebugEnabled())
 
         binding.recyclerView.apply {
             recyclerView = this
             layoutManager = LinearLayoutManager(context)
             adapter = logAdapter
-            logAdapter.setLogLines(timberInMemoryLogTree.logLines(), preferences.debugLog)
         }
+    }
 
-        binding.shareFab.setOnClickListener {
-            revokeExportUriPermissions()
-            val key = "${getRandomHexString()}/debug=${preferences.debugLog}/owntracks-debug.txt"
-            logExportUri = Uri.parse("content://${BuildConfig.APPLICATION_ID}.log/$key")
-            val shareIntent = ShareCompat.IntentBuilder.from(this)
-                    .setType("text/plain")
-                    .setSubject("Owntracks Log File")
-                    .setChooserTitle(R.string.exportLogFilePrompt)
-                    .setStream(logExportUri)
-                    .createChooserIntent()
-                    .addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
-            grantUriPermission("android", logExportUri, Intent.FLAG_GRANT_READ_URI_PERMISSION)
-            shareIntentActivityLauncher.launch(shareIntent)
-        }
+    fun onShareFabClick(_view: View) {
+        revokeExportUriPermissions()
+        val key = "${getRandomHexString()}/debug=${viewModel.isDebugEnabled()}/owntracks-debug.txt"
+        logExportUri = Uri.parse("content://${BuildConfig.APPLICATION_ID}.log/$key")
+        val shareIntent = ShareCompat.IntentBuilder(this)
+            .setType("text/plain")
+            .setSubject("Owntracks Log File")
+            .setChooserTitle(R.string.exportLogFilePrompt)
+            .setStream(logExportUri)
+            .createChooserIntent()
+            .addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+        grantUriPermission("android", logExportUri, Intent.FLAG_GRANT_READ_URI_PERMISSION)
+        shareIntentActivityLauncher.launch(shareIntent)
     }
 
     override fun onCreateOptionsMenu(menu: Menu?): Boolean {
@@ -96,7 +101,7 @@ class LogViewerActivity : BaseActivity<UiPreferencesLogsBinding, NoOpViewModel>(
     }
 
     override fun onPrepareOptionsMenu(menu: Menu): Boolean {
-        menu.findItem(R.id.show_debug_logs).isChecked = preferences.debugLog
+        menu.findItem(R.id.show_debug_logs).isChecked = viewModel.isDebugEnabled()
         return true
     }
 
@@ -107,27 +112,22 @@ class LogViewerActivity : BaseActivity<UiPreferencesLogsBinding, NoOpViewModel>(
                 true
             }
             R.id.clear_log -> {
-                timberInMemoryLogTree.clear()
-                logAdapter.setLogLines(timberInMemoryLogTree.logLines(), preferences.debugLog)
+                viewModel.clearLog()
+                logAdapter.setLogLines(viewModel.logLines(), viewModel.isDebugEnabled())
                 true
             }
             R.id.refresh_log -> {
-                logAdapter.setLogLines(timberInMemoryLogTree.logLines(), preferences.debugLog)
+                logAdapter.setLogLines(viewModel.logLines(), viewModel.isDebugEnabled())
                 true
             }
             R.id.show_debug_logs -> {
                 item.isChecked = !item.isChecked
-                preferences.debugLog = item.isChecked
-                logAdapter.setLogLines(timberInMemoryLogTree.logLines(), preferences.debugLog)
+                viewModel.enableDebugLogs(item.isChecked)
+                logAdapter.setLogLines(viewModel.logLines(), viewModel.isDebugEnabled())
                 true
             }
             else -> super.onOptionsItemSelected(item)
         }
-    }
-
-    override fun onDestroy() {
-        super.onDestroy()
-        coroutineScope.cancel()
     }
 
     private fun getRandomHexString(): String {
