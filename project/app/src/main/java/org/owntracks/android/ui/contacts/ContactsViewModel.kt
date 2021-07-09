@@ -19,8 +19,7 @@ class ContactsViewModel @Inject constructor(
     BaseViewModel<ContactsMvvm.View>(), ContactsMvvm.ViewModel<ContactsMvvm.View> {
     private val mainScope = MainScope()
     fun refreshGeocodes() {
-
-        Timber.tag("399845").i("Refreshing contacts geocodes")
+        Timber.d("Refreshing contacts geocodes")
         mainScope.launch {
             contactsRepo.all.value?.forEach {
                 it.value.messageLocation?.run { geocoderProvider.resolve(this) }
