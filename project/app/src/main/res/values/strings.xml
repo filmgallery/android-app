@@ -212,6 +212,8 @@
     <string name="preferencesAdvancedAutostartWarning">This version of Android restricts OwnTracks from receiving locations when automatically started on device boot until the app is opened.</string>
     <string name="dozeWhitelistedYes">Yes</string>
     <string name="dozeWhitelistedNo">No</string>
+    <string name="deleteRegionConfirmation">Do you want to Delete</string>
+    <string name="deleteRegionTitle">Delete</string>
     <string-array name="geocoders">
         <item>None</item>
         <item>Device (Google)</item>
