@@ -29,4 +29,6 @@ class ContactsViewModel @Inject constructor(
 
     override val contacts: LiveData<MutableMap<String, FusedContact>>
         get() = contactsRepo.all
+
+
 }

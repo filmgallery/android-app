@@ -8,7 +8,7 @@ import androidx.databinding.DataBindingUtil
 import androidx.databinding.ViewDataBinding
 import androidx.recyclerview.widget.RecyclerView
 
-typealias ClickHasBeenHandled= Boolean
+typealias ClickHasBeenHandled = Boolean
 
 abstract class BaseRecyclerViewAdapterWithClickHandler<T, VH : BaseRecyclerViewHolder<T>>(
     private val clickListener: ClickListener<T>,
