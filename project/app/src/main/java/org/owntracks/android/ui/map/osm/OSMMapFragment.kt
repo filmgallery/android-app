@@ -44,6 +44,7 @@ class OSMMapFragment internal constructor() : MapFragment() {
     private var locationSource: LocationSource? = null
     private var mapView: MapView? = null
     private lateinit var binding: OsmMapFragmentBinding
+
     override fun onCreateView(
         inflater: LayoutInflater,
         container: ViewGroup?,
@@ -67,6 +68,7 @@ class OSMMapFragment internal constructor() : MapFragment() {
             controller.setZoom(ZOOM_STREET_LEVEL)
             controller.setCenter(GeoPoint(STARTING_LATITUDE, STARTING_LONGITUDE))
 
+            val dotDimension = (24 * (requireContext().resources.displayMetrics.densityDpi / 160f)).toInt()
             locationSource?.also {
                 val myLocationNewOverlay = MyLocationNewOverlay(
                     it.toOSMLocationSource(),
@@ -74,10 +76,10 @@ class OSMMapFragment internal constructor() : MapFragment() {
                 )
                 val arrowBitmap =
                     ResourcesCompat.getDrawable(resources, R.drawable.location_dot_arrow, null)
-                        ?.toBitmap(50, 50)
+                        ?.toBitmap(dotDimension, dotDimension)
                 val dotBitmap =
                     ResourcesCompat.getDrawable(resources, R.drawable.location_dot, null)
-                        ?.toBitmap(50, 50)
+                        ?.toBitmap(dotDimension, dotDimension)
                 myLocationNewOverlay.setDirectionArrow(
                     dotBitmap,
                     arrowBitmap
