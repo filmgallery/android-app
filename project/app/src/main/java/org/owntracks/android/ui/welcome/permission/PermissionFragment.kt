@@ -8,73 +8,94 @@ import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AlertDialog
 import androidx.core.content.ContextCompat
+import androidx.databinding.DataBindingUtil
+import androidx.fragment.app.Fragment
+import androidx.fragment.app.activityViewModels
+import androidx.fragment.app.viewModels
+import com.google.android.material.snackbar.Snackbar
 import dagger.hilt.android.AndroidEntryPoint
-import org.greenrobot.eventbus.EventBus
 import org.owntracks.android.R
-import org.owntracks.android.databinding.UiWelcomeIntroBinding
-import org.owntracks.android.support.Events
-import org.owntracks.android.ui.base.BaseSupportFragment
+import org.owntracks.android.databinding.UiWelcomePermissionsBinding
+import org.owntracks.android.ui.welcome.WelcomeViewModel
 import javax.inject.Inject
 
 @AndroidEntryPoint
-class PermissionFragment @Inject constructor() :
-    BaseSupportFragment<UiWelcomeIntroBinding?, PermissionFragmentViewModel>(),
-    PermissionFragmentMvvm.View {
-    @Inject
-    lateinit var eventBus: EventBus
-    private var askedForPermission = false
+class PermissionFragment @Inject constructor() : Fragment() {
+    private val viewModel: PermissionFragmentViewModel by viewModels()
+    private val activityViewModel: WelcomeViewModel by activityViewModels()
+    private lateinit var binding: UiWelcomePermissionsBinding
+
+    private enum class PermissionStatus {
+        NOT_ASKED,
+        DENIED_ONCE,
+        DENIED_MULTIPLE,
+        GRANTED
+    }
+
+    private var permissionStatus = PermissionStatus.NOT_ASKED
+
     override fun onCreateView(
         inflater: LayoutInflater,
         container: ViewGroup?,
         savedInstanceState: Bundle?
-    ): View? {
-        return setAndBindContentView(
-            inflater,
-            container,
-            R.layout.ui_welcome_permissions,
-            savedInstanceState
-        )
-    }
+    ): View {
+        binding =
+            DataBindingUtil.inflate(inflater, R.layout.ui_welcome_permissions, container, false)
+        binding.lifecycleOwner = this
+        binding.vm = viewModel
 
-    private val requestLocationPermission =
-        registerForActivityResult(ActivityResultContracts.RequestPermission()) { isGranted ->
-            askedForPermission = true
-            if (isGranted) {
-                viewModel.isPermissionGranted = true
-                eventBus.post(Events.WelcomeNextDoneButtonsEnableToggle())
-                eventBus.postSticky(Events.PermissionGranted(Manifest.permission.ACCESS_FINE_LOCATION))
-            }
-        }
-
-    override fun requestFix() {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-            if (askedForPermission) {
-                if (shouldShowRequestPermissionRationale(Manifest.permission.ACCESS_FINE_LOCATION)) {
-                    AlertDialog.Builder(requireContext())
+        binding.fixPermissionsButton.setOnClickListener {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                when (permissionStatus) {
+                    PermissionStatus.NOT_ASKED -> requestLocationPermission.launch(Manifest.permission.ACCESS_FINE_LOCATION)
+                    PermissionStatus.DENIED_ONCE -> AlertDialog.Builder(requireContext())
                         .setCancelable(true)
                         .setMessage(R.string.permissions_description)
                         .setPositiveButton(
                             "OK"
-                        ) { _: DialogInterface?, _: Int -> requestLocationPermission.launch(Manifest.permission.ACCESS_FINE_LOCATION) }
+                        ) { _: DialogInterface?, _: Int ->
+                            requestLocationPermission.launch(
+                                Manifest.permission.ACCESS_FINE_LOCATION
+                            )
+                        }
                         .show()
-                } else {
-                    Toast.makeText(
-                        this.context,
-                        "Unable to proceed without location permissions.",
-                        Toast.LENGTH_SHORT
+                    PermissionStatus.DENIED_MULTIPLE -> Snackbar.make(
+                        binding.root,
+                        R.string.welcomePermissionUnableToProceedWithoutPermissions,
+                        Snackbar.LENGTH_SHORT
                     ).show()
+                    PermissionStatus.GRANTED -> {
+                    }
                 }
             } else {
                 requestLocationPermission.launch(Manifest.permission.ACCESS_FINE_LOCATION)
             }
-        } else {
-            requestLocationPermission.launch(Manifest.permission.ACCESS_FINE_LOCATION)
         }
+        return binding.root
     }
+
+    private val requestLocationPermission =
+        registerForActivityResult(ActivityResultContracts.RequestPermission()) { isGranted ->
+            if (isGranted) {
+                permissionStatus = PermissionStatus.GRANTED
+                viewModel.permissionGranted.postValue(true)
+                activityViewModel.nextEnabled.postValue(true)
+            } else {
+                permissionStatus =
+                    if (permissionStatus == PermissionStatus.DENIED_ONCE &&
+                        !shouldShowRequestPermissionRationale(Manifest.permission.ACCESS_FINE_LOCATION)
+                    ) {
+                        PermissionStatus.DENIED_MULTIPLE
+                    } else if (shouldShowRequestPermissionRationale(Manifest.permission.ACCESS_FINE_LOCATION)) {
+                        PermissionStatus.DENIED_ONCE
+                    } else {
+                        PermissionStatus.NOT_ASKED
+                    }
+            }
+        }
 
     private fun checkPermission() = ContextCompat.checkSelfPermission(
         requireContext(),
@@ -83,10 +104,11 @@ class PermissionFragment @Inject constructor() :
 
     override fun onResume() {
         super.onResume()
+        activityViewModel.doneEnabled.postValue(false)
         checkPermission().run {
-            eventBus.post(Events.WelcomeNextDoneButtonsEnableToggle(this))
-            viewModel.isPermissionGranted = this
-            viewModel.isPermissionRequired = !this
+            viewModel.permissionGranted.postValue(this)
+            viewModel.permissionRequired.postValue(!this)
+            activityViewModel.nextEnabled.postValue(this)
         }
     }
 }

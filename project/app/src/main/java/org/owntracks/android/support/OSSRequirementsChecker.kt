@@ -16,13 +16,11 @@ open class OSSRequirementsChecker @Inject constructor(
         return isPermissionCheckPassed() && preferences.isSetupCompleted
     }
 
-    override fun isPermissionCheckPassed(): Boolean = ContextCompat.checkSelfPermission(
-        context,
-        Manifest.permission.ACCESS_FINE_LOCATION
-    ) == PackageManager.PERMISSION_GRANTED && ContextCompat.checkSelfPermission(
-        context,
-        Manifest.permission.ACCESS_COARSE_LOCATION
-    ) == PackageManager.PERMISSION_GRANTED
+    override fun isPermissionCheckPassed(): Boolean =
+        ContextCompat.checkSelfPermission(
+            context,
+            Manifest.permission.ACCESS_FINE_LOCATION
+        ) == PackageManager.PERMISSION_GRANTED
 
     override fun isPlayServicesCheckPassed(): Boolean = true
 }

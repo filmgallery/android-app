@@ -1,30 +1,14 @@
 package org.owntracks.android.ui.welcome.permission
 
-import androidx.databinding.Bindable
-import dagger.hilt.android.scopes.ActivityScoped
-import org.owntracks.android.BR
-import org.owntracks.android.ui.base.viewmodel.BaseViewModel
+import androidx.lifecycle.MutableLiveData
+import androidx.lifecycle.ViewModel
+import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
 
-@ActivityScoped
+@HiltViewModel
 class PermissionFragmentViewModel @Inject internal constructor() :
-    BaseViewModel<PermissionFragmentMvvm.View>() {
-    @get:Bindable
-    var isPermissionGranted = false
-        set(permissionGranted) {
-            field = permissionGranted
-            notifyPropertyChanged(BR.permissionGranted)
-        }
-
-    @get:Bindable
-    var isPermissionRequired = false
-        set(permissionRequired) {
-            field = permissionRequired
-            notifyPropertyChanged(BR.permissionRequired)
-        }
-
-    fun onFixClicked() {
-        view?.requestFix()
-    }
+    ViewModel() {
+    val permissionGranted = MutableLiveData(false)
+    val permissionRequired = MutableLiveData(false)
 }
 

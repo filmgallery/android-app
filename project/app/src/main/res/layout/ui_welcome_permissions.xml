@@ -55,7 +55,7 @@
             android:gravity="center_horizontal"
             android:text="@string/permissions_granted"
             android:textSize="16sp"
-            android:visibility="@{vm.permissionGranted}" />
+            android:visibility="@{vm.permissionGranted ? View.VISIBLE : View.GONE}" />
 
         <Button
             android:id="@+id/fix_permissions_button"
@@ -63,9 +63,8 @@
             android:layout_height="wrap_content"
             android:layout_alignParentBottom="true"
             android:layout_centerHorizontal="true"
-            android:onClick="@{() -> vm.onFixClicked()}"
             android:text="@string/welcomeFixIssue"
-            android:visibility="@{vm.permissionRequired}" />
+            android:visibility="@{vm.permissionGranted ? View.GONE : View.VISIBLE}" />
 
         <TextView
             android:id="@+id/screen_desc"
