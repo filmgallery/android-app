@@ -11,22 +11,18 @@ import android.view.ViewGroup
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AlertDialog
 import androidx.core.content.ContextCompat
-import androidx.databinding.DataBindingUtil
-import androidx.fragment.app.Fragment
-import androidx.fragment.app.activityViewModels
 import androidx.fragment.app.viewModels
 import com.google.android.material.snackbar.Snackbar
 import dagger.hilt.android.AndroidEntryPoint
 import org.owntracks.android.R
 import org.owntracks.android.databinding.UiWelcomePermissionsBinding
-import org.owntracks.android.ui.welcome.WelcomeViewModel
+import org.owntracks.android.ui.welcome.BaseWelcomeFragment
 import javax.inject.Inject
 
 @AndroidEntryPoint
-class PermissionFragment @Inject constructor() : Fragment() {
+class PermissionFragment @Inject constructor() :
+    BaseWelcomeFragment<UiWelcomePermissionsBinding>(R.layout.ui_welcome_permissions) {
     private val viewModel: PermissionFragmentViewModel by viewModels()
-    private val activityViewModel: WelcomeViewModel by activityViewModels()
-    private lateinit var binding: UiWelcomePermissionsBinding
 
     private enum class PermissionStatus {
         NOT_ASKED,
@@ -42,9 +38,7 @@ class PermissionFragment @Inject constructor() : Fragment() {
         container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View {
-        binding =
-            DataBindingUtil.inflate(inflater, R.layout.ui_welcome_permissions, container, false)
-        binding.lifecycleOwner = this
+        super.onCreateView(inflater, container, savedInstanceState)
         binding.vm = viewModel
 
         binding.fixPermissionsButton.setOnClickListener {
