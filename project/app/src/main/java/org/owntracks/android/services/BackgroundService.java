@@ -299,7 +299,7 @@ public class BackgroundService extends LifecycleService implements OnModeChanged
                 .setStyle(new NotificationCompat.BigTextStyle().bigText(notificationText))
                 .setContentIntent(PendingIntent.getActivity(getApplicationContext(), 0, activityLaunchIntent, PendingIntent.FLAG_UPDATE_CURRENT))
                 .setPriority(PRIORITY_LOW)
-                .setNotificationSilent()
+                .setSilent(true)
                 .build();
 
         notificationManager.notify(BACKGROUND_LOCATION_RESTRICTION_NOTIFICATION_TAG, 0, notification);

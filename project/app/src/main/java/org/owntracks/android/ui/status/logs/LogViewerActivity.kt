@@ -76,6 +76,7 @@ class LogViewerActivity : AppCompatActivity() {
         }
     }
 
+    @Suppress("UNUSED_PARAMETER")
     fun onShareFabClick(_view: View) {
         revokeExportUriPermissions()
         val key = "${getRandomHexString()}/debug=${viewModel.isDebugEnabled()}/owntracks-debug.txt"

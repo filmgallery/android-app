@@ -29,7 +29,8 @@ class TextDrawable private constructor(builder: Builder) : ShapeDrawable(builder
         radius = builder.radius
 
         // text and color
-        text = if (builder.toUpperCase) builder.text.toUpperCase(Locale.getDefault()) else builder.text
+        text =
+            if (builder.toUpperCase) builder.text.uppercase(Locale.getDefault()) else builder.text
 
         // text paint settings
         fontSize = builder.fontSize

@@ -144,7 +144,7 @@ class EditorActivity : AppCompatActivity() {
         revokeExportUriPermissions()
         val key = getRandomHexString()
         configExportUri = Uri.parse("content://${BuildConfig.APPLICATION_ID}.config/$key")
-        val shareIntent = ShareCompat.IntentBuilder.from(this)
+        val shareIntent = ShareCompat.IntentBuilder(this)
             .setType("text/plain")
             .setSubject("Owntracks Configuration File")
             .setChooserTitle(R.string.exportConfiguration)

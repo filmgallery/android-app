@@ -107,7 +107,7 @@ class GeocoderProvider @Inject constructor(
                 )
             )
             .setPriority(PRIORITY_LOW)
-            .setNotificationSilent()
+            .setSilent(true)
             .build()
 
         notificationManager.notify(GEOCODE_ERROR_NOTIFICATION_TAG, 0, notification)

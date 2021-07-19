@@ -53,7 +53,6 @@ open class PreferencesActivity : AppCompatActivity(),
             pref.fragment
         )
         fragment.arguments = args
-        fragment.setTargetFragment(caller, 0)
         // Replace the existing Fragment with the new Fragment
         supportFragmentManager.beginTransaction()
             .replace(R.id.content_frame, fragment)
