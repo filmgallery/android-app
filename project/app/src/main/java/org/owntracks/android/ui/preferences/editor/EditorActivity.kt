@@ -8,42 +8,46 @@ import android.view.Menu
 import android.view.MenuItem
 import android.widget.ArrayAdapter
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.activity.viewModels
 import androidx.appcompat.app.AlertDialog
+import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ShareCompat
+import androidx.databinding.DataBindingUtil
 import com.google.android.material.snackbar.Snackbar
 import com.rengwuxian.materialedittext.MaterialAutoCompleteTextView
 import com.rengwuxian.materialedittext.MaterialEditText
 import dagger.hilt.android.AndroidEntryPoint
-import org.greenrobot.eventbus.EventBus
 import org.owntracks.android.BuildConfig
 import org.owntracks.android.R
 import org.owntracks.android.databinding.UiPreferencesEditorBinding
-import org.owntracks.android.support.Events.RestartApp
-import org.owntracks.android.ui.base.BaseActivity
-import org.owntracks.android.ui.base.navigator.Navigator
+import org.owntracks.android.support.AppRestarter
+import org.owntracks.android.support.Preferences
 import org.owntracks.android.ui.preferences.load.LoadActivity
 import timber.log.Timber
 import java.util.*
 import javax.inject.Inject
 
 @AndroidEntryPoint
-class EditorActivity :
-    BaseActivity<UiPreferencesEditorBinding?, EditorMvvm.ViewModel<EditorMvvm.View?>?>(),
-    EditorMvvm.View {
+class EditorActivity : AppCompatActivity() {
+    val viewModel: EditorViewModel by viewModels()
     private var configExportUri: Uri? = null
 
     @Inject
-    lateinit var eventBus: EventBus
+    lateinit var preferences: Preferences
 
     @Inject
-    lateinit var navigator: Navigator
+    lateinit var appRestarter: AppRestarter
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        disablesAnimation()
-        bindAndAttachContentView(R.layout.ui_preferences_editor, savedInstanceState)
-        setHasEventBus(false)
-        setSupportToolbar(binding!!.appbar.toolbar, true, true)
+
+        val binding: UiPreferencesEditorBinding =
+            DataBindingUtil.setContentView(this, R.layout.ui_preferences_editor)
+        binding.lifecycleOwner = this
+        binding.vm = viewModel
+
+        setSupportActionBar(binding.appbar.toolbar)
+        supportActionBar?.setDisplayHomeAsUpEnabled(true)
     }
 
     override fun onCreateOptionsMenu(menu: Menu): Boolean {
@@ -67,22 +71,17 @@ class EditorActivity :
                 return true
             }
             R.id.restart -> {
-                eventBus.post(RestartApp())
+                appRestarter.restart()
                 return false
             }
             else -> return false
         }
     }
 
-    override fun onSupportNavigateUp(): Boolean {
-        onBackPressed()
-        return true
-    }
-
     private fun showImportConfigurationFilePickerView() {
         val b = Bundle()
         b.putBoolean(LoadActivity.FLAG_IN_APP, true)
-        navigator.startActivity(LoadActivity::class.java, b)
+        startActivity(Intent(this, LoadActivity::class.java), b)
     }
 
     private fun showEditorView() {
@@ -106,7 +105,6 @@ class EditorActivity :
                 val value = inputValue.text.toString()
                 try {
                     preferences.importKeyValue(key, value)
-                    viewModel!!.onPreferencesValueForKeySetSuccessful()
                     dialog.dismiss()
                 } catch (e: IllegalAccessException) {
                     Timber.w(e)
@@ -142,7 +140,7 @@ class EditorActivity :
         return Random().nextInt(0X1000000).toString(16)
     }
 
-    override fun exportConfigurationToFile(): Boolean {
+    private fun exportConfigurationToFile(): Boolean {
         revokeExportUriPermissions()
         val key = getRandomHexString()
         configExportUri = Uri.parse("content://${BuildConfig.APPLICATION_ID}.config/$key")
@@ -158,7 +156,7 @@ class EditorActivity :
         return true
     }
 
-    override fun displayLoadFailed() {
+    fun displayLoadFailed() {
         Snackbar.make(
             findViewById(R.id.effectiveConfiguration),
             R.string.preferencesLoadFailed,

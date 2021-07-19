@@ -19,6 +19,7 @@ import org.owntracks.android.model.messages.MessageLocation;
 import org.owntracks.android.model.messages.MessageTransition;
 import org.owntracks.android.model.messages.MessageUnknown;
 import org.owntracks.android.services.worker.Scheduler;
+import org.owntracks.android.support.AppRestarter;
 import org.owntracks.android.support.Events;
 import org.owntracks.android.support.Parser;
 import org.owntracks.android.support.Preferences;
@@ -56,6 +57,7 @@ public class MessageProcessor {
     private final ServiceBridge serviceBridge;
     private final CountingIdlingResource outgoingQueueIdlingResource;
     private EndpointStateRepo endpointStateRepo;
+    private AppRestarter appRestarter;
     private final RunThingsOnOtherThreads runThingsOnOtherThreads;
     private MessageProcessorEndpoint endpoint;
 
@@ -442,7 +444,7 @@ public class MessageProcessor {
                     reconnect();
                     break;
                 case RESTART:
-                    eventBus.post(new Events.RestartApp());
+                    new AppRestarter(applicationContext, scheduler, this).restart();
                     break;
                 default:
                     break;
