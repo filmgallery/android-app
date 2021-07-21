@@ -28,11 +28,11 @@ import java.util.concurrent.TimeUnit
 @RunWith(AndroidJUnit4::class)
 class LocationMessageRetryTest : TestWithAnActivity<MapActivity>(MapActivity::class.java, false) {
 
-    private var mockWebServer = MockWebServer()
+    private lateinit var mockWebServer: MockWebServer
 
     @Before
     fun startMockWebserver() {
-        mockWebServer.shutdown()
+        mockWebServer = MockWebServer()
         mockWebServer.start()
         mockWebServer.dispatcher = MockWebserverLocationDispatcher(locationResponse)
     }
@@ -74,7 +74,6 @@ class LocationMessageRetryTest : TestWithAnActivity<MapActivity>(MapActivity::cl
         clickOnAndWait(R.string.preferencesServer)
         clickOnAndWait(R.string.mode_heading)
         clickOnAndWait(R.string.mode_http_private_label)
-        BaristaDialogInteractions.clickDialogPositiveButton()
         clickOnAndWait(R.string.preferencesHost)
         BaristaEditTextInteractions.writeTo(R.id.url, "http://localhost:${httpPort}/")
         BaristaDialogInteractions.clickDialogPositiveButton()
