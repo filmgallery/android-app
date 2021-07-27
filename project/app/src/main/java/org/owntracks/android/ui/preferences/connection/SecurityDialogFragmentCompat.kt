@@ -5,6 +5,7 @@ import android.net.Uri
 import android.provider.OpenableColumns
 import android.view.View
 import android.widget.EditText
+import android.widget.LinearLayout
 import android.widget.PopupMenu
 import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.contract.ActivityResultContracts
@@ -33,6 +34,10 @@ class SecurityDialogFragmentCompat constructor(
     private var tlsCaCertField: EditText? = null
     private var tlsClientCertField: EditText? = null
     private var tlsClientCrtPasswordField: EditText? = null
+
+    private var tlsCaCertFieldLayout: LinearLayout? = null
+    private var tlsClientCertFieldLayout: LinearLayout? = null
+    private var tlsClientCrtPasswordFieldLayout: LinearLayout? = null
 
     private fun uriToFilename(uri: Uri): String {
         if (uri.scheme.equals("content")) {
@@ -127,6 +132,8 @@ class SecurityDialogFragmentCompat constructor(
                     popup.show()
                 }
             }
+        tlsCaCertFieldLayout = view?.findViewById(R.id.tlsCaCrtLayout)
+
         tlsClientCertField =
             view?.findViewById<EditText>(R.id.tlsClientCrt)?.apply {
                 setText(model.tlsClientCert)
@@ -136,9 +143,11 @@ class SecurityDialogFragmentCompat constructor(
                     popup.show()
                 }
             }
+        tlsClientCertFieldLayout = view?.findViewById(R.id.tlsClientCrtLayout)
         tlsClientCrtPasswordField =
             view?.findViewById<EditText>(R.id.tlsClientCrtPassword)
                 ?.apply { setText(model.tlsClientCertPassword) }
+        tlsClientCrtPasswordFieldLayout = view?.findViewById(R.id.tlsClientCrtPasswordLayout)
 
         tlsField =
             view?.findViewById<SwitchCompat>(R.id.tls)?.apply {
@@ -152,9 +161,9 @@ class SecurityDialogFragmentCompat constructor(
 
     private fun setCertificateFieldVisibilities(checked: Boolean) =
         listOf(
-            tlsCaCertField,
-            tlsClientCertField,
-            tlsClientCrtPasswordField
+            tlsCaCertFieldLayout,
+            tlsClientCertFieldLayout,
+            tlsClientCrtPasswordFieldLayout
         ).forEach {
             it?.visibility =
                 if (checked) View.VISIBLE else View.GONE

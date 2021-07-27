@@ -47,7 +47,6 @@
             app:met_primaryColor="@color/accent" />
 
         <RelativeLayout
-            android:id="@+id/tlsWrapper"
             android:layout_width="match_parent"
             android:layout_height="48dp"
             android:orientation="vertical">

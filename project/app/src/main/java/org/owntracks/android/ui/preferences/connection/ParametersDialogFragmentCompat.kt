@@ -2,14 +2,13 @@ package org.owntracks.android.ui.preferences.connection
 
 import android.view.View
 import androidx.appcompat.widget.SwitchCompat
-import com.rengwuxian.materialedittext.MaterialEditText
-import com.rengwuxian.materialedittext.validation.METValidator
 import org.owntracks.android.R
+import org.owntracks.android.ui.preferences.ValidatingEditText
 
 class ParametersDialogFragmentCompat constructor(
     key: String,
     private val model: Model,
-    private val keepaliveValidator: METValidator,
+    private val minimumKeepalive: Long,
     private val positiveCallback: (Model) -> Unit
 ) :
     ValidatingPreferenceDialogFragmentCompatWithKey(key) {
@@ -19,15 +18,26 @@ class ParametersDialogFragmentCompat constructor(
     )
 
     private var cleanSessionField: SwitchCompat? = null
-    private var keepaliveField: MaterialEditText? = null
+    private var keepaliveField: ValidatingEditText? = null
 
     override fun onBindDialogView(view: View?) {
         super.onBindDialogView(view)
         cleanSessionField =
             view?.findViewById<SwitchCompat>(R.id.cleanSession)
                 ?.apply { isChecked = model.cleanSession }
-        keepaliveField = view?.findViewById<MaterialEditText>(R.id.keepalive)?.apply {
-            addValidator(keepaliveValidator)
+        keepaliveField = view?.findViewById<ValidatingEditText>(R.id.keepalive)?.apply {
+            validationErrorMessage = getString(
+                R.string.preferencesKeepaliveValidationError,
+                minimumKeepalive
+            )
+            validationFunction = { text: String ->
+                try {
+                    val intValue = text.toInt()
+                    intValue >= minimumKeepalive
+                } catch (e: NumberFormatException) {
+                    false
+                }
+            }
             model.keepalive?.also { setText(it.toString()) }
         }
         validatedFields = listOf(keepaliveField)

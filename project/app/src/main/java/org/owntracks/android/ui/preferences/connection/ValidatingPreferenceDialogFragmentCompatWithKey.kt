@@ -3,7 +3,7 @@ package org.owntracks.android.ui.preferences.connection
 import android.os.Bundle
 import androidx.appcompat.app.AlertDialog
 import androidx.preference.PreferenceDialogFragmentCompat
-import com.rengwuxian.materialedittext.MaterialEditText
+import org.owntracks.android.ui.preferences.ValidatingEditText
 
 abstract class ValidatingPreferenceDialogFragmentCompatWithKey(private val key: String) :
     PreferenceDialogFragmentCompat() {
@@ -11,7 +11,7 @@ abstract class ValidatingPreferenceDialogFragmentCompatWithKey(private val key: 
         arguments = Bundle(1).apply { putString(ARG_KEY, key) }
     }
 
-    protected var validatedFields: List<MaterialEditText?> = emptyList()
+    protected var validatedFields: List<ValidatingEditText?> = emptyList()
 
     override fun onStart() {
         super.onStart()

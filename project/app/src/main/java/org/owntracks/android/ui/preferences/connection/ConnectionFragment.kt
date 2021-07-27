@@ -19,8 +19,6 @@ class ConnectionFragment : AbstractPreferenceFragment() {
     private val hiddenHTTPModePreferences =
         listOf(R.string.preferencesParameters, R.string.preferencesSecurity)
 
-    private lateinit var keepaliveValidator: METValidator
-
     private lateinit var urlValidator: METValidator
 
     override fun onCreatePreferencesFix(savedInstanceState: Bundle?, rootKey: String?) {
@@ -59,23 +57,7 @@ class ConnectionFragment : AbstractPreferenceFragment() {
         }
 
         // Preferences is lateinit injected, so we need to set the validator here
-        keepaliveValidator = object : METValidator(
-            getString(
-                R.string.preferencesKeepaliveValidationError,
-                if (preferences.isExperimentalFeatureEnabled(Preferences.EXPERIMENTAL_FEATURE_ALLOW_SMALL_KEEPALIVE)) 1 else preferences.minimumKeepalive
-            )
-        ) {
-            override fun isValid(text: CharSequence, isEmpty: Boolean): Boolean {
-                return try {
-                    val intValue = text.toString().toInt()
-                    isEmpty || preferences.keepAliveInRange(intValue) || preferences.isExperimentalFeatureEnabled(
-                        Preferences.EXPERIMENTAL_FEATURE_ALLOW_SMALL_KEEPALIVE
-                    ) && intValue >= 1
-                } catch (e: NumberFormatException) {
-                    false
-                }
-            }
-        }
+
         urlValidator = object : METValidator(getString(R.string.preferencesUrlValidationError)) {
             override fun isValid(text: CharSequence, isEmpty: Boolean): Boolean {
                 return try {
@@ -196,7 +178,7 @@ class ConnectionFragment : AbstractPreferenceFragment() {
                         preferences.cleanSession,
                         preferences.keepalive
                     ),
-                    keepaliveValidator
+                    if (preferences.isExperimentalFeatureEnabled(Preferences.EXPERIMENTAL_FEATURE_ALLOW_SMALL_KEEPALIVE)) 1 else preferences.minimumKeepalive
                 ) { model ->
                     preferences.cleanSession = model.cleanSession
                     model.keepalive

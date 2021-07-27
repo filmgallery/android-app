@@ -22,7 +22,7 @@ class HttpHostDialogFragmentCompat constructor(
             setText(model.url)
             addValidator(urlValidator)
         }
-        validatedFields = listOf(urlField)
+//        validatedFields = listOf(urlField)
     }
 
     override fun onDialogClosed(positiveResult: Boolean) {
