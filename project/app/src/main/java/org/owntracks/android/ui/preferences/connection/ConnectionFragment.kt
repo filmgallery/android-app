@@ -48,6 +48,12 @@ class ConnectionFragment : AbstractPreferenceFragment() {
             }
         }
 
+        findPreference<Preference>(getString(R.string.preferencesSecurity))?.setSummaryProvider {
+            if (preferences.tls && preferences.tlsClientCrt.isNotBlank()) getString(R.string.tlsEnabledWithClientCertificates)
+            else if (preferences.tls) getString(R.string.tlsEnabled)
+            else getString(R.string.tlsDisabled)
+        }
+
         keepaliveValidator =
             object : METValidator(
                 getString(
@@ -120,7 +126,7 @@ class ConnectionFragment : AbstractPreferenceFragment() {
                             preferences.host = model.host
                             model.port
                                 ?.also { preferences.port = it }
-                                ?.run { preferences.setPortDefault() }
+                                ?: run { preferences.setPortDefault() }
                             preferences.clientId = model.clientId
                             preferences.ws = model.webSockets
                             preference.summaryProvider = preference.summaryProvider

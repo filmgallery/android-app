@@ -60,28 +60,38 @@ class SecurityDialogFragmentCompat constructor(
 //        return result
     }
 
-    private val something = registerForActivityResult(ActivityResultContracts.GetContent()) {
-        lifecycleScope.launch(Dispatchers.IO) {
-            Timber.v("CopyTask with URI: %s", it)
-            val filename: String = uriToFilename(it)
-            Timber.v("filename for save is: %s", filename)
-            requireContext().applicationContext.contentResolver.openInputStream(it)
-                .use { inputStream ->
-                    requireContext().applicationContext.openFileOutput(
-                        filename,
-                        Context.MODE_PRIVATE
-                    )
-                        .use { outputStream ->
-                            val buffer = ByteArray(256)
-                            var bytesRead: Int
-                            while (inputStream!!.read(buffer).also { bytesRead = it } != -1) {
-                                outputStream.write(buffer, 0, bytesRead)
-                            }
+    private var stashedEditText: EditText? = null
+
+    private val copyFileToPrivateStorageActivityResult =
+        registerForActivityResult(ActivityResultContracts.GetContent()) { uri ->
+            lifecycleScope.launch(Dispatchers.IO) {
+                uri?.run {
+                    Timber.v("CopyTask with URI: %s", this)
+                    val filename: String = uriToFilename(this)
+                    Timber.v("filename for save is: %s", filename)
+                    requireContext().applicationContext.contentResolver.openInputStream(this)
+                        .use { inputStream ->
+                            requireContext().applicationContext.openFileOutput(
+                                filename,
+                                Context.MODE_PRIVATE
+                            )
+                                .use { outputStream ->
+                                    val buffer = ByteArray(256)
+                                    var bytesRead: Int
+                                    while (inputStream!!.read(buffer)
+                                            .also { bytesRead = it } != -1
+                                    ) {
+                                        outputStream.write(buffer, 0, bytesRead)
+                                    }
+                                }
                         }
+                    Timber.v("copied file to private storage: %s", filename)
+                    lifecycleScope.launch(Dispatchers.Main) {
+                        stashedEditText?.setText(filename)
+                    }
                 }
-            Timber.v("copied file to private storage: %s", filename)
+            }
         }
-    }
 
     private fun certificateFieldPopupMenu(
         textField: EditText,
@@ -91,7 +101,19 @@ class SecurityDialogFragmentCompat constructor(
         setOnMenuItemClickListener {
             when (it.itemId) {
                 R.id.clear -> {
-                    textField.setText("")
+                    lifecycleScope.launch(Dispatchers.IO) {
+                        val filename = textField.text.toString()
+                        try {
+                            Timber.v("Deleting certificate: $filename")
+                            val result = requireContext().applicationContext.deleteFile(filename)
+                            Timber.v("Certificate deletion success: $result")
+                        } catch (e: Exception) {
+                            Timber.w(e, "Unable to remove certificate file $filename")
+                        }
+                        lifecycleScope.launch(Dispatchers.Main) {
+                            textField.setText("")
+                        }
+                    }
                     true
                 }
                 R.id.select -> {
@@ -109,13 +131,21 @@ class SecurityDialogFragmentCompat constructor(
         tlsCaCertField =
             view?.findViewById<EditText>(R.id.tlsCaCrt)?.apply {
                 setText(model.tlsCaCert)
-                val popup = certificateFieldPopupMenu(this, something)
+                val popup = certificateFieldPopupMenu(this, copyFileToPrivateStorageActivityResult)
                 setOnClickListener {
+                    stashedEditText = this
                     popup.show()
                 }
             }
         tlsClientCertField =
-            view?.findViewById<EditText>(R.id.tlsClientCrt)?.apply { setText(model.tlsClientCert) }
+            view?.findViewById<EditText>(R.id.tlsClientCrt)?.apply {
+                setText(model.tlsClientCert)
+                val popup = certificateFieldPopupMenu(this, copyFileToPrivateStorageActivityResult)
+                setOnClickListener {
+                    stashedEditText = this
+                    popup.show()
+                }
+            }
         tlsClientCrtPasswordField =
             view?.findViewById<EditText>(R.id.tlsClientCrtPassword)
                 ?.apply { setText(model.tlsClientCertPassword) }
