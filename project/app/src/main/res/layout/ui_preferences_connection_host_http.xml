@@ -9,7 +9,7 @@
         android:layout_height="wrap_content"
         android:orientation="vertical">
 
-        <EditText
+        <com.rengwuxian.materialedittext.MaterialEditText
             android:id="@+id/url"
             style="@style/Widget.AppCompat.EditText"
             android:layout_width="match_parent"

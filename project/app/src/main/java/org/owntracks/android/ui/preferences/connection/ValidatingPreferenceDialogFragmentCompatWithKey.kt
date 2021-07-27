@@ -5,13 +5,13 @@ import androidx.appcompat.app.AlertDialog
 import androidx.preference.PreferenceDialogFragmentCompat
 import com.rengwuxian.materialedittext.MaterialEditText
 
-abstract class PreferenceDialogFragmentCompatWithKey(private val key: String) :
+abstract class ValidatingPreferenceDialogFragmentCompatWithKey(private val key: String) :
     PreferenceDialogFragmentCompat() {
     init {
         arguments = Bundle(1).apply { putString(ARG_KEY, key) }
     }
 
-    protected abstract val validatedFields: List<MaterialEditText?>
+    protected var validatedFields: List<MaterialEditText?> = emptyList()
 
     override fun onStart() {
         super.onStart()

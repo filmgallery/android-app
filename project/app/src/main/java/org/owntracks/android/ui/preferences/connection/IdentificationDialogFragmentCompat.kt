@@ -2,7 +2,6 @@ package org.owntracks.android.ui.preferences.connection
 
 import android.view.View
 import android.widget.EditText
-import com.rengwuxian.materialedittext.MaterialEditText
 import org.owntracks.android.R
 
 class IdentificationDialogFragmentCompat constructor(
@@ -10,7 +9,7 @@ class IdentificationDialogFragmentCompat constructor(
     private val model: Model,
     private val positiveCallback: (Model) -> Unit
 ) :
-    PreferenceDialogFragmentCompatWithKey(key) {
+    ValidatingPreferenceDialogFragmentCompatWithKey(key) {
     data class Model(
         internal val username: String,
         internal val password: String,
@@ -22,7 +21,6 @@ class IdentificationDialogFragmentCompat constructor(
     private var passwordField: EditText? = null
     private var deviceIdField: EditText? = null
     private var trackerIdField: EditText? = null
-    override val validatedFields: List<MaterialEditText?> = emptyList()
 
     override fun onBindDialogView(view: View?) {
         super.onBindDialogView(view)

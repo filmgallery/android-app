@@ -10,7 +10,6 @@ import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.widget.SwitchCompat
 import androidx.lifecycle.lifecycleScope
-import com.rengwuxian.materialedittext.MaterialEditText
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import org.owntracks.android.R
@@ -22,7 +21,7 @@ class SecurityDialogFragmentCompat constructor(
     private val model: Model,
     private val positiveCallback: (Model) -> Unit
 ) :
-    PreferenceDialogFragmentCompatWithKey(key) {
+    ValidatingPreferenceDialogFragmentCompatWithKey(key) {
     data class Model(
         internal val tlsEnabled: Boolean,
         internal val tlsCaCert: String,
@@ -34,7 +33,6 @@ class SecurityDialogFragmentCompat constructor(
     private var tlsCaCertField: EditText? = null
     private var tlsClientCertField: EditText? = null
     private var tlsClientCrtPasswordField: EditText? = null
-    override val validatedFields: List<MaterialEditText?> = emptyList()
 
     private fun uriToFilename(uri: Uri): String {
         if (uri.scheme.equals("content")) {
@@ -49,15 +47,7 @@ class SecurityDialogFragmentCompat constructor(
                     }
                 }
         }
-        return "" // STOPSHIP: 23/07/2021
-//        if (result == null) {
-//            result = uri.path
-//            val cut = result!!.lastIndexOf('/')
-//            if (cut != -1) {
-//                result = result!!.substring(cut + 1)
-//            }
-//        }
-//        return result
+        return ""
     }
 
     private var stashedEditText: EditText? = null

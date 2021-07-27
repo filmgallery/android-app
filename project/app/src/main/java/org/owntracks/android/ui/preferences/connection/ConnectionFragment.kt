@@ -10,6 +10,8 @@ import org.owntracks.android.services.MessageProcessorEndpointHttp
 import org.owntracks.android.services.MessageProcessorEndpointMqtt
 import org.owntracks.android.support.Preferences
 import org.owntracks.android.ui.preferences.AbstractPreferenceFragment
+import java.net.MalformedURLException
+import java.net.URL
 
 
 @AndroidEntryPoint
@@ -18,6 +20,8 @@ class ConnectionFragment : AbstractPreferenceFragment() {
         listOf(R.string.preferencesParameters, R.string.preferencesSecurity)
 
     private lateinit var keepaliveValidator: METValidator
+
+    private lateinit var urlValidator: METValidator
 
     override fun onCreatePreferencesFix(savedInstanceState: Bundle?, rootKey: String?) {
         super.onCreatePreferencesFix(savedInstanceState, rootKey)
@@ -54,24 +58,34 @@ class ConnectionFragment : AbstractPreferenceFragment() {
             else getString(R.string.tlsDisabled)
         }
 
-        keepaliveValidator =
-            object : METValidator(
-                getString(
-                    R.string.preferencesKeepaliveValidationError,
-                    if (preferences.isExperimentalFeatureEnabled(Preferences.EXPERIMENTAL_FEATURE_ALLOW_SMALL_KEEPALIVE)) 1 else preferences.minimumKeepalive
-                )
-            ) {
-                override fun isValid(text: CharSequence, isEmpty: Boolean): Boolean {
-                    return try {
-                        val intValue = text.toString().toInt()
-                        isEmpty || preferences.keepAliveInRange(intValue) || preferences.isExperimentalFeatureEnabled(
-                            Preferences.EXPERIMENTAL_FEATURE_ALLOW_SMALL_KEEPALIVE
-                        ) && intValue >= 1
-                    } catch (e: NumberFormatException) {
-                        false
-                    }
+        // Preferences is lateinit injected, so we need to set the validator here
+        keepaliveValidator = object : METValidator(
+            getString(
+                R.string.preferencesKeepaliveValidationError,
+                if (preferences.isExperimentalFeatureEnabled(Preferences.EXPERIMENTAL_FEATURE_ALLOW_SMALL_KEEPALIVE)) 1 else preferences.minimumKeepalive
+            )
+        ) {
+            override fun isValid(text: CharSequence, isEmpty: Boolean): Boolean {
+                return try {
+                    val intValue = text.toString().toInt()
+                    isEmpty || preferences.keepAliveInRange(intValue) || preferences.isExperimentalFeatureEnabled(
+                        Preferences.EXPERIMENTAL_FEATURE_ALLOW_SMALL_KEEPALIVE
+                    ) && intValue >= 1
+                } catch (e: NumberFormatException) {
+                    false
                 }
             }
+        }
+        urlValidator = object : METValidator(getString(R.string.preferencesUrlValidationError)) {
+            override fun isValid(text: CharSequence, isEmpty: Boolean): Boolean {
+                return try {
+                    URL(text.toString())
+                    true
+                } catch (e: MalformedURLException) {
+                    false
+                }
+            }
+        }
 
         setPreferenceVisibilityBasedOnMode(preferences.mode)
     }
@@ -105,7 +119,8 @@ class ConnectionFragment : AbstractPreferenceFragment() {
                     MessageProcessorEndpointHttp.MODE_ID -> {
                         HttpHostDialogFragmentCompat(
                             preference.key,
-                            HttpHostDialogFragmentCompat.Model(preferences.url)
+                            HttpHostDialogFragmentCompat.Model(preferences.url),
+                            urlValidator
                         ) { model ->
                             preferences.url = model.url
                             preference.summaryProvider = preference.summaryProvider

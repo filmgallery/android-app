@@ -3,14 +3,13 @@ package org.owntracks.android.ui.preferences.connection
 import android.view.View
 import android.widget.EditText
 import androidx.appcompat.widget.SwitchCompat
-import com.rengwuxian.materialedittext.MaterialEditText
 import org.owntracks.android.R
 
 class MqttHostDialogFragmentCompat constructor(
     key: String,
     private val model: Model,
     private val positiveCallback: (Model) -> Unit
-) : PreferenceDialogFragmentCompatWithKey(key) {
+) : ValidatingPreferenceDialogFragmentCompatWithKey(key) {
 
     private var hostField: EditText? = null
     private var portField: EditText? = null
@@ -23,8 +22,6 @@ class MqttHostDialogFragmentCompat constructor(
         internal val clientId: String,
         internal val webSockets: Boolean
     )
-
-    override val validatedFields: List<MaterialEditText?> = emptyList()
 
     override fun onBindDialogView(view: View?) {
         super.onBindDialogView(view)

@@ -12,7 +12,7 @@ class ParametersDialogFragmentCompat constructor(
     private val keepaliveValidator: METValidator,
     private val positiveCallback: (Model) -> Unit
 ) :
-    PreferenceDialogFragmentCompatWithKey(key) {
+    ValidatingPreferenceDialogFragmentCompatWithKey(key) {
     data class Model(
         internal val cleanSession: Boolean,
         internal val keepalive: Int?
@@ -21,19 +21,16 @@ class ParametersDialogFragmentCompat constructor(
     private var cleanSessionField: SwitchCompat? = null
     private var keepaliveField: MaterialEditText? = null
 
-    override val validatedFields = listOf(keepaliveField)
-
     override fun onBindDialogView(view: View?) {
         super.onBindDialogView(view)
         cleanSessionField =
             view?.findViewById<SwitchCompat>(R.id.cleanSession)
                 ?.apply { isChecked = model.cleanSession }
-        model.keepalive?.also {
-            keepaliveField = view?.findViewById<MaterialEditText>(R.id.keepalive)
-                ?.apply { setText(it.toString()) }
+        keepaliveField = view?.findViewById<MaterialEditText>(R.id.keepalive)?.apply {
+            addValidator(keepaliveValidator)
+            model.keepalive?.also { setText(it.toString()) }
         }
-
-        keepaliveField?.addValidator(keepaliveValidator)
+        validatedFields = listOf(keepaliveField)
     }
 
     override fun onDialogClosed(positiveResult: Boolean) {
@@ -51,5 +48,4 @@ class ParametersDialogFragmentCompat constructor(
             }
         }
     }
-
 }

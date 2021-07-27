@@ -1,24 +1,28 @@
 package org.owntracks.android.ui.preferences.connection
 
 import android.view.View
-import android.widget.EditText
 import com.rengwuxian.materialedittext.MaterialEditText
+import com.rengwuxian.materialedittext.validation.METValidator
 import org.owntracks.android.R
 
 class HttpHostDialogFragmentCompat constructor(
     key: String,
     private val model: Model,
+    private val urlValidator: METValidator,
     private val positiveCallback: (Model) -> Unit
 ) :
-    PreferenceDialogFragmentCompatWithKey(key) {
+    ValidatingPreferenceDialogFragmentCompatWithKey(key) {
     data class Model(internal val url: String)
 
-    private var urlField: EditText? = null
-    override val validatedFields: List<MaterialEditText?> = emptyList()
+    private var urlField: MaterialEditText? = null
 
     override fun onBindDialogView(view: View?) {
         super.onBindDialogView(view)
-        urlField = view?.findViewById<EditText>(R.id.url)?.apply { setText(model.url) }
+        urlField = view?.findViewById<MaterialEditText>(R.id.url)?.apply {
+            setText(model.url)
+            addValidator(urlValidator)
+        }
+        validatedFields = listOf(urlField)
     }
 
     override fun onDialogClosed(positiveResult: Boolean) {
