@@ -1,28 +1,36 @@
 package org.owntracks.android.ui.preferences.connection
 
 import android.view.View
-import com.rengwuxian.materialedittext.MaterialEditText
-import com.rengwuxian.materialedittext.validation.METValidator
 import org.owntracks.android.R
+import org.owntracks.android.ui.preferences.ValidatingEditText
+import java.net.MalformedURLException
+import java.net.URL
 
 class HttpHostDialogFragmentCompat constructor(
     key: String,
     private val model: Model,
-    private val urlValidator: METValidator,
     private val positiveCallback: (Model) -> Unit
 ) :
     ValidatingPreferenceDialogFragmentCompatWithKey(key) {
     data class Model(internal val url: String)
 
-    private var urlField: MaterialEditText? = null
+    private var urlField: ValidatingEditText? = null
 
     override fun onBindDialogView(view: View?) {
         super.onBindDialogView(view)
-        urlField = view?.findViewById<MaterialEditText>(R.id.url)?.apply {
+        urlField = view?.findViewById<ValidatingEditText>(R.id.url)?.apply {
             setText(model.url)
-            addValidator(urlValidator)
+            validationErrorMessage = getString(R.string.preferencesUrlValidationError)
+            validationFunction = { text: String ->
+                try {
+                    URL(text.toString())
+                    true
+                } catch (e: MalformedURLException) {
+                    false
+                }
+            }
         }
-//        validatedFields = listOf(urlField)
+        validatedFields = listOf(urlField)
     }
 
     override fun onDialogClosed(positiveResult: Boolean) {

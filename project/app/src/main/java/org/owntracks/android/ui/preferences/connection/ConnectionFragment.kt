@@ -56,19 +56,6 @@ class ConnectionFragment : AbstractPreferenceFragment() {
             else getString(R.string.tlsDisabled)
         }
 
-        // Preferences is lateinit injected, so we need to set the validator here
-
-        urlValidator = object : METValidator(getString(R.string.preferencesUrlValidationError)) {
-            override fun isValid(text: CharSequence, isEmpty: Boolean): Boolean {
-                return try {
-                    URL(text.toString())
-                    true
-                } catch (e: MalformedURLException) {
-                    false
-                }
-            }
-        }
-
         setPreferenceVisibilityBasedOnMode(preferences.mode)
     }
 
@@ -101,8 +88,7 @@ class ConnectionFragment : AbstractPreferenceFragment() {
                     MessageProcessorEndpointHttp.MODE_ID -> {
                         HttpHostDialogFragmentCompat(
                             preference.key,
-                            HttpHostDialogFragmentCompat.Model(preferences.url),
-                            urlValidator
+                            HttpHostDialogFragmentCompat.Model(preferences.url)
                         ) { model ->
                             preferences.url = model.url
                             preference.summaryProvider = preference.summaryProvider

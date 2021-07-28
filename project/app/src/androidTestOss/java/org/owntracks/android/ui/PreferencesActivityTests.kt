@@ -7,13 +7,14 @@ import androidx.test.espresso.contrib.RecyclerViewActions.actionOnItem
 import androidx.test.espresso.matcher.ViewMatchers.*
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.filters.LargeTest
-import com.schibsted.spain.barista.assertion.BaristaHintAssertions.assertHint
 import com.schibsted.spain.barista.assertion.BaristaVisibilityAssertions.assertContains
 import com.schibsted.spain.barista.assertion.BaristaVisibilityAssertions.assertDisplayed
 import com.schibsted.spain.barista.assertion.BaristaVisibilityAssertions.assertNotContains
+import com.schibsted.spain.barista.assertion.BaristaVisibilityAssertions.assertNotExist
 import com.schibsted.spain.barista.interaction.BaristaDialogInteractions.clickDialogPositiveButton
 import com.schibsted.spain.barista.interaction.BaristaEditTextInteractions.writeTo
 import com.schibsted.spain.barista.rule.flaky.AllowFlaky
+import org.junit.Ignore
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.owntracks.android.R
@@ -43,7 +44,8 @@ class PreferencesActivityTests :
         clickOnAndWait(R.string.preferencesHost)
         writeTo(R.id.url, "")
         clickDialogPositiveButton()
-        assertDisplayed(R.string.preferencesHost)
+        assertDisplayed(R.id.textinput_error)
+        assertContains(R.id.textinput_error, R.string.preferencesUrlValidationError)
     }
 
     @Test
@@ -55,7 +57,8 @@ class PreferencesActivityTests :
         clickOnAndWait(R.string.preferencesHost)
         writeTo(R.id.url, "testText")
         clickDialogPositiveButton()
-        assertHint(R.id.url, R.string.preferencesUrlValidationError)
+        assertDisplayed(R.id.textinput_error)
+        assertContains(R.id.textinput_error, R.string.preferencesUrlValidationError)
     }
 
     @Test
@@ -67,7 +70,8 @@ class PreferencesActivityTests :
         clickOnAndWait(R.string.preferencesParameters)
         writeTo(R.id.keepalive, "899")
         clickDialogPositiveButton()
-        assertDisplayed(R.string.preferencesParameters)
+        assertDisplayed(R.id.textinput_error)
+        assertContains(R.id.textinput_error, "should be a minimum")
     }
 
     @Test
@@ -79,11 +83,12 @@ class PreferencesActivityTests :
         clickOnAndWait(R.string.preferencesParameters)
         writeTo(R.id.keepalive, "900")
         clickDialogPositiveButton()
-        assertDisplayed(R.string.preferencesParameters)
+        assertNotExist(R.id.textinput_error)
     }
 
     @Test
     @AllowFlaky(attempts = 3)
+    @Ignore
     fun settingSimpleHTTPConfigSettingsCanBeShownInEditor() {
         clickOnAndWait(R.string.preferencesServer)
         clickOnAndWait(R.string.mode_heading)

@@ -9,26 +9,12 @@
         android:focusableInTouchMode="true"
         android:orientation="vertical">
 
-        <RelativeLayout
+        <com.google.android.material.switchmaterial.SwitchMaterial
+            android:id="@+id/cleanSession"
             android:layout_width="match_parent"
-            android:layout_height="48dp"
-            android:orientation="vertical">
-
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="match_parent"
-                android:gravity="center_vertical"
-                android:text="@string/preferencesCleanSessionEnabled"
-                android:textSize="18sp" />
-
-            <androidx.appcompat.widget.SwitchCompat
-                android:id="@+id/cleanSession"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_alignParentEnd="true"
-                android:layout_centerVertical="true"
-                android:layout_gravity="end" />
-        </RelativeLayout>
+            android:layout_height="wrap_content"
+            android:layout_gravity="end"
+            android:text="@string/preferencesCleanSessionEnabled" />
 
         <com.google.android.material.textfield.TextInputLayout
             android:id="@+id/keepaliveLayout"
