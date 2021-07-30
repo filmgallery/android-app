@@ -227,6 +227,9 @@
     <string name="tlsEnabled">TLS Enabled</string>
     <string name="tlsEnabledWithClientCertificates">TLS Enabled with client certificate</string>
     <string name="tlsDisabled">TLS Disabled</string>
+    <string name="preferencesCategoryConnectionEndpoint">Endpoint</string>
+    <string name="preferencesTLSClientCrtPasswordSetSummary">Password Set</string>
+    <string name="preferencesPortValidationError">Port must be between 1 and 65535</string>
     <string-array name="geocoders">
         <item>None</item>
         <item>Device (Google)</item>

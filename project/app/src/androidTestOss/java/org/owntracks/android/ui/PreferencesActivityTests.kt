@@ -1,5 +1,6 @@
 package org.owntracks.android.ui
 
+import androidx.annotation.StringRes
 import androidx.recyclerview.widget.RecyclerView
 import androidx.test.espresso.Espresso.onView
 import androidx.test.espresso.action.ViewActions.scrollTo
@@ -14,7 +15,6 @@ import com.schibsted.spain.barista.assertion.BaristaVisibilityAssertions.assertN
 import com.schibsted.spain.barista.interaction.BaristaDialogInteractions.clickDialogPositiveButton
 import com.schibsted.spain.barista.interaction.BaristaEditTextInteractions.writeTo
 import com.schibsted.spain.barista.rule.flaky.AllowFlaky
-import org.junit.Ignore
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.owntracks.android.R
@@ -41,11 +41,11 @@ class PreferencesActivityTests :
         clickOnAndWait(R.string.preferencesServer)
         clickOnAndWait(R.string.mode_heading)
         clickOnAndWait(R.string.mode_http_private_label)
-        clickOnAndWait(R.string.preferencesHost)
-        writeTo(R.id.url, "")
-        clickDialogPositiveButton()
-        assertDisplayed(R.id.textinput_error)
-        assertContains(R.id.textinput_error, R.string.preferencesUrlValidationError)
+        writeToEditTextDialog(R.string.preferencesUrl, "")
+        assertContainsError(
+            android.R.id.edit,
+            baristaRule.activityTestRule.activity.getString(R.string.preferencesUrlValidationError)
+        )
     }
 
     @Test
@@ -54,11 +54,11 @@ class PreferencesActivityTests :
         clickOnAndWait(R.string.preferencesServer)
         clickOnAndWait(R.string.mode_heading)
         clickOnAndWait(R.string.mode_http_private_label)
-        clickOnAndWait(R.string.preferencesHost)
-        writeTo(R.id.url, "testText")
-        clickDialogPositiveButton()
-        assertDisplayed(R.id.textinput_error)
-        assertContains(R.id.textinput_error, R.string.preferencesUrlValidationError)
+        writeToEditTextDialog(R.string.preferencesUrl, "testText")
+        assertContainsError(
+            android.R.id.edit,
+            baristaRule.activityTestRule.activity.getString(R.string.preferencesUrlValidationError)
+        )
     }
 
     @Test
@@ -67,11 +67,8 @@ class PreferencesActivityTests :
         clickOnAndWait(R.string.preferencesServer)
         clickOnAndWait(R.string.mode_heading)
         clickOnAndWait(R.string.mode_mqtt_private_label)
-        clickOnAndWait(R.string.preferencesParameters)
-        writeTo(R.id.keepalive, "899")
-        clickDialogPositiveButton()
-        assertDisplayed(R.id.textinput_error)
-        assertContains(R.id.textinput_error, "should be a minimum")
+        writeToEditTextDialog(R.string.preferencesKeepalive, "899")
+        assertContainsError(android.R.id.edit, "Keepalive should be a minimum")
     }
 
     @Test
@@ -80,28 +77,73 @@ class PreferencesActivityTests :
         clickOnAndWait(R.string.preferencesServer)
         clickOnAndWait(R.string.mode_heading)
         clickOnAndWait(R.string.mode_mqtt_private_label)
-        clickOnAndWait(R.string.preferencesParameters)
-        writeTo(R.id.keepalive, "900")
-        clickDialogPositiveButton()
-        assertNotExist(R.id.textinput_error)
+        writeToEditTextDialog(R.string.preferencesKeepalive, "900")
+        assertNotExist(android.R.id.edit)
     }
 
     @Test
-    @AllowFlaky(attempts = 3)
-    @Ignore
+    @AllowFlaky(attempts = 1)
+    fun settingSimpleMQTTConfigSettingsCanBeShownInEditor() {
+        clickOnAndWait(R.string.preferencesServer)
+        clickOnAndWait(R.string.mode_heading)
+        clickOnAndWait(R.string.mode_mqtt_private_label)
+
+        writeToEditTextDialog(R.string.preferencesHost, "mqtt.example.com")
+        writeToEditTextDialog(R.string.preferencesPort, "1234")
+        writeToEditTextDialog(R.string.preferencesClientId, "test-clientId")
+
+        clickOnAndWait(R.string.preferencesWebsocket)
+        writeToEditTextDialog(R.string.preferencesUserUsername, "testUsername")
+        writeToEditTextDialog(R.string.preferencesBrokerPassword, "testPassword")
+        writeToEditTextDialog(R.string.preferencesDeviceName, "testDeviceId")
+        writeToEditTextDialog(R.string.preferencesTrackerId, "t5")
+
+        scrollToText(R.string.preferencesCleanSessionEnabled)
+
+        clickOnAndWait(R.string.preferencesCleanSessionEnabled)
+        writeToEditTextDialog(R.string.preferencesKeepalive, "1570")
+
+        clickBackAndWait()
+        clickOnAndWait(R.string.configurationManagement)
+
+        assertContains(R.id.effectiveConfiguration, "\"_type\" : \"configuration\"")
+        assertContains(R.id.effectiveConfiguration, " \"waypoints\" : [ ]")
+
+        assertContains(R.id.effectiveConfiguration, "\"host\" : \"mqtt.example.com\"")
+        assertContains(R.id.effectiveConfiguration, "\"port\" : 1234")
+        assertContains(R.id.effectiveConfiguration, "\"clientId\" : \"test-clientId\"")
+        assertContains(R.id.effectiveConfiguration, "\"username\" : \"testUsername\"")
+        assertContains(R.id.effectiveConfiguration, "\"password\" : \"********\"")
+        assertContains(R.id.effectiveConfiguration, "\"deviceId\" : \"testDeviceId\"")
+        assertContains(R.id.effectiveConfiguration, "\"tid\" : \"t5\"")
+
+        assertContains(R.id.effectiveConfiguration, "\"pubQos\" : 1")
+        assertContains(R.id.effectiveConfiguration, "\"subQos\" : 2")
+        assertContains(R.id.effectiveConfiguration, "\"info\" : true")
+        assertContains(R.id.effectiveConfiguration, "\"tlsCaCrt\" : \"\"")
+        assertContains(R.id.effectiveConfiguration, "\"tlsClientCrt\" : \"\"")
+        assertContains(R.id.effectiveConfiguration, "\"tlsClientCrtPassword\" : \"\"")
+        assertContains(R.id.effectiveConfiguration, "\"tls\" : true")
+        assertContains(R.id.effectiveConfiguration, "\"mqttProtocolLevel\" : 4")
+        assertContains(R.id.effectiveConfiguration, "\"subTopic\" : \"owntracks/+/+\"")
+        assertContains(R.id.effectiveConfiguration, "\"pubTopicBase\" : \"owntracks/%u/%d\"")
+        assertContains(R.id.effectiveConfiguration, "\"ws\" : true")
+
+        assertNotContains(R.id.effectiveConfiguration, "\"url\"")
+        assertNotContains(R.id.effectiveConfiguration, "\"preferenceKeyDontReuseHttpClient\"")
+    }
+
+    @Test
+    @AllowFlaky(attempts = 1)
     fun settingSimpleHTTPConfigSettingsCanBeShownInEditor() {
         clickOnAndWait(R.string.preferencesServer)
         clickOnAndWait(R.string.mode_heading)
         clickOnAndWait(R.string.mode_http_private_label)
-        clickOnAndWait(R.string.preferencesHost)
-        writeTo(R.id.url, "https://www.example.com:8080/")
-        clickDialogPositiveButton()
-        clickOnAndWait(R.string.preferencesIdentification)
-        writeTo(R.id.username, "testUsername")
-        writeTo(R.id.password, "testPassword")
-        writeTo(R.id.deviceId, "testDeviceId")
-        writeTo(R.id.trackerId, "t1")
-        clickDialogPositiveButton()
+        writeToEditTextDialog(R.string.preferencesUrl, "https://www.example.com:8080/")
+        writeToEditTextDialog(R.string.preferencesUserUsername, "testUsername")
+        writeToEditTextDialog(R.string.preferencesBrokerPassword, "testPassword")
+        writeToEditTextDialog(R.string.preferencesDeviceName, "testDeviceId")
+        writeToEditTextDialog(R.string.preferencesTrackerId, "t1")
         clickBackAndWait()
 
 
@@ -115,24 +157,10 @@ class PreferencesActivityTests :
 
         clickOnAndWait(R.string.preferencesAdvanced)
         clickOnAndWait(R.string.preferencesRemoteCommand)
-        clickOnAndWait(R.string.preferencesIgnoreInaccurateLocations)
 
-        writeTo(android.R.id.edit, "950")
-
-        clickDialogPositiveButton()
-
-        clickOnAndWait(R.string.preferencesLocatorInterval)
-
-        writeTo(android.R.id.edit, "123")
-
-        clickDialogPositiveButton()
-
-        scrollToText(R.string.preferencesMoveModeLocatorInterval)
-        clickOnAndWait(R.string.preferencesMoveModeLocatorInterval)
-
-        writeTo(android.R.id.edit, "5")
-
-        clickDialogPositiveButton()
+        writeToEditTextDialog(R.string.preferencesIgnoreInaccurateLocations, "950")
+        writeToEditTextDialog(R.string.preferencesLocatorInterval, "123")
+        writeToEditTextDialog(R.string.preferencesMoveModeLocatorInterval, "5")
 
         scrollToText(R.string.preferencesAutostart)
         clickOnAndWait(R.string.preferencesAutostart)
@@ -142,10 +170,7 @@ class PreferencesActivityTests :
 
         clickOnAndWait("OpenCage")
 
-        scrollToText(R.string.preferencesOpencageGeocoderApiKey)
-        clickOnAndWait(R.string.preferencesOpencageGeocoderApiKey)
-        writeTo(android.R.id.edit, "geocodeAPIKey")
-        clickDialogPositiveButton()
+        writeToEditTextDialog(R.string.preferencesOpencageGeocoderApiKey, "geocodeAPIKey")
 
         clickBackAndWait()
 
@@ -197,5 +222,12 @@ class PreferencesActivityTests :
                     hasDescendant(withText(textResource)), scrollTo()
                 )
             )
+    }
+
+    private fun writeToEditTextDialog(@StringRes name: Int, value: String) {
+        scrollToText(name)
+        clickOnAndWait(name)
+        writeTo(android.R.id.edit, value)
+        clickDialogPositiveButton()
     }
 }
