@@ -9,7 +9,7 @@ plugins {
 }
 
 val versionMajor = 2
-val versionMinor = 4
+val versionMinor = 5
 val versionPatch = 0
 
 val googleMapsAPIKey = extra.get("google_maps_api_key")?.toString() ?: "PLACEHOLDER_API_KEY"
