@@ -12,9 +12,7 @@ import com.schibsted.spain.barista.assertion.BaristaVisibilityAssertions.assertC
 import com.schibsted.spain.barista.assertion.BaristaVisibilityAssertions.assertDisplayed
 import com.schibsted.spain.barista.assertion.BaristaVisibilityAssertions.assertNotDisplayed
 import com.schibsted.spain.barista.interaction.BaristaClickInteractions.clickBack
-import com.schibsted.spain.barista.interaction.BaristaDialogInteractions.clickDialogPositiveButton
 import com.schibsted.spain.barista.interaction.BaristaDrawerInteractions.openDrawer
-import com.schibsted.spain.barista.interaction.BaristaEditTextInteractions.writeTo
 import com.schibsted.spain.barista.rule.flaky.AllowFlaky
 import okhttp3.mockwebserver.Dispatcher
 import okhttp3.mockwebserver.MockResponse
@@ -28,6 +26,7 @@ import org.owntracks.android.R
 import org.owntracks.android.TestWithAnActivity
 import org.owntracks.android.ui.clickOnAndWait
 import org.owntracks.android.ui.map.MapActivity
+import org.owntracks.android.ui.writeToEditTextDialog
 
 @LargeTest
 @RunWith(AndroidJUnit4::class)
@@ -73,9 +72,7 @@ class ContactActivityTests : TestWithAnActivity<MapActivity>(MapActivity::class.
         clickOnAndWait(R.string.preferencesServer)
         clickOnAndWait(R.string.mode_heading)
         clickOnAndWait(R.string.mode_http_private_label)
-        clickOnAndWait(R.string.preferencesHost)
-        writeTo(R.id.url, "http://localhost:${httpPort}/")
-        clickDialogPositiveButton()
+        writeToEditTextDialog(R.string.preferencesUrl,"http://localhost:${httpPort}/")
         clickBack()
 
         openDrawer()

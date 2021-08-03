@@ -32,13 +32,13 @@ class EditorViewModel @Inject constructor(
 
     private fun updateEffectiveConfiguration() {
         try {
+            val url = preferences.url
             val message = preferences.exportToMessage()
             message.waypoints = waypointsRepo.exportToMessage()
             message[preferences.getPreferenceKey(R.string.preferenceKeyPassword)] = "********"
             mutableConfiguration.postValue(parser.toUnencryptedJsonPretty(message))
         } catch (e: IOException) {
             Timber.e(e)
-//            view?.displayLoadFailed()
         }
     }
 
@@ -50,7 +50,7 @@ class EditorViewModel @Inject constructor(
     }
 
     override fun onAttachAfterModeChanged() {
-        TODO("Not yet implemented")
+        // NOOP
     }
 
     override fun onSharedPreferenceChanged(sharedPreferences: SharedPreferences?, key: String?) {

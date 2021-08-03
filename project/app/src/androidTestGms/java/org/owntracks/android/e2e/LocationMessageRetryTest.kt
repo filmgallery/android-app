@@ -6,9 +6,7 @@ import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.filters.LargeTest
 import com.schibsted.spain.barista.assertion.BaristaVisibilityAssertions.assertContains
 import com.schibsted.spain.barista.interaction.BaristaClickInteractions.clickBack
-import com.schibsted.spain.barista.interaction.BaristaDialogInteractions
 import com.schibsted.spain.barista.interaction.BaristaDrawerInteractions.openDrawer
-import com.schibsted.spain.barista.interaction.BaristaEditTextInteractions
 import com.schibsted.spain.barista.rule.flaky.AllowFlaky
 import okhttp3.mockwebserver.Dispatcher
 import okhttp3.mockwebserver.MockResponse
@@ -22,6 +20,7 @@ import org.owntracks.android.R
 import org.owntracks.android.TestWithAnActivity
 import org.owntracks.android.ui.clickOnAndWait
 import org.owntracks.android.ui.map.MapActivity
+import org.owntracks.android.ui.writeToEditTextDialog
 import java.util.concurrent.TimeUnit
 
 @LargeTest
@@ -74,9 +73,8 @@ class LocationMessageRetryTest : TestWithAnActivity<MapActivity>(MapActivity::cl
         clickOnAndWait(R.string.preferencesServer)
         clickOnAndWait(R.string.mode_heading)
         clickOnAndWait(R.string.mode_http_private_label)
-        clickOnAndWait(R.string.preferencesHost)
-        BaristaEditTextInteractions.writeTo(R.id.url, "http://localhost:${httpPort}/")
-        BaristaDialogInteractions.clickDialogPositiveButton()
+        writeToEditTextDialog(R.string.preferencesUrl, "http://localhost:${httpPort}/")
+
         clickBack()
 
         openDrawer()

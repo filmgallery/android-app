@@ -13,6 +13,10 @@ abstract class AbstractPreferenceFragment :
     lateinit var preferences: Preferences
 
     override fun onCreatePreferencesFix(savedInstanceState: Bundle?, rootKey: String?) {
+        setSharedPreferenceNameToCurrentSharedPreferences()
+    }
+
+    fun setSharedPreferenceNameToCurrentSharedPreferences() {
         preferenceManager.sharedPreferencesName = preferences.sharedPreferencesName
     }
 

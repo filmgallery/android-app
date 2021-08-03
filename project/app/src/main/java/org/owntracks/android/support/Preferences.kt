@@ -759,8 +759,13 @@ class Preferences @Inject constructor(
     @get:Export(keyResId = R.string.preferenceKeyURL, exportModeHttp = true)
     @set:Import(keyResId = R.string.preferenceKeyURL)
     var url: String
-        get() = getStringOrDefault(R.string.preferenceKeyURL, R.string.valEmpty)
+        get() {
+            val url = getStringOrDefault(R.string.preferenceKeyURL, R.string.valEmpty)
+            Timber.e("Getting URL value = $url, pref hashcode = ${this.hashCode()}")
+            return url
+        }
         set(url) {
+            Timber.e("Setting URL value = $url, pref hashcode = ${this.hashCode()}")
             setString(R.string.preferenceKeyURL, url)
         }
 
