@@ -189,7 +189,7 @@ dependencies {
 
     implementation("androidx.work:work-runtime:2.5.0")
     implementation("androidx.core:core-ktx:1.6.0")
-    implementation("androidx.fragment:fragment-ktx:1.3.5")
+    implementation("androidx.fragment:fragment-ktx:1.3.6")
 
     implementation("androidx.lifecycle:lifecycle-common-java8:2.3.1")
     implementation("androidx.lifecycle:lifecycle-service:2.3.1")
