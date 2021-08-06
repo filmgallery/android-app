@@ -32,7 +32,6 @@ class EditorViewModel @Inject constructor(
 
     private fun updateEffectiveConfiguration() {
         try {
-            val url = preferences.url
             val message = preferences.exportToMessage()
             message.waypoints = waypointsRepo.exportToMessage()
             message[preferences.getPreferenceKey(R.string.preferenceKeyPassword)] = "********"
@@ -42,11 +41,9 @@ class EditorViewModel @Inject constructor(
         }
     }
 
-
     override fun onCleared() {
         preferences.unregisterOnPreferenceChangedListener(this)
         super.onCleared()
-
     }
 
     override fun onAttachAfterModeChanged() {

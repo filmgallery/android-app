@@ -20,21 +20,16 @@ jacoco {
 }
 
 android {
-    compileSdkVersion(30)
+    compileSdk = 30
 
     defaultConfig {
         applicationId = "org.owntracks.android"
-        minSdkVersion(21)
-        targetSdkVersion(30)
+        minSdk = 21
+        targetSdk = 30
 
         versionCode = versionMajor * 10000 + versionMinor * 1000 + versionPatch * 100
         versionName = "${versionMajor}.${versionMinor}.${versionPatch}"
 
-        javaCompileOptions {
-            annotationProcessorOptions {
-                arguments(mapOf("eventBusIndex" to "org.owntracks.android.EventBusIndex"))
-            }
-        }
         val locales = listOf("en", "de", "fr", "es", "ru", "ca", "pl")
         buildConfigField(
             "String[]",
@@ -42,7 +37,7 @@ android {
             "new String[]{\"" + locales.joinToString("\",\"") + "\"}"
         )
         resConfigs(locales)
-        testInstrumentationRunner("androidx.test.runner.AndroidJUnitRunner")
+        testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         testInstrumentationRunnerArguments.putAll(
             mapOf(
                 "clearPackageData" to "false",
@@ -65,9 +60,11 @@ android {
         named("release") {
             isMinifyEnabled = true
             isShrinkResources = true
-            proguardFiles = mutableListOf(
-                getDefaultProguardFile("proguard-android.txt"),
-                file("proguard-rules.pro")
+            proguardFiles.addAll(
+                listOf(
+                    getDefaultProguardFile("proguard-android.txt"),
+                    file("proguard-rules.pro")
+                )
             )
             resValue("string", "GOOGLE_MAPS_API_KEY", googleMapsAPIKey)
             signingConfig = signingConfigs.findByName("release")
@@ -76,9 +73,11 @@ android {
         named("debug") {
             isMinifyEnabled = false
             isShrinkResources = false
-            proguardFiles = mutableListOf(
-                getDefaultProguardFile("proguard-android.txt"),
-                file("proguard-rules.pro")
+            proguardFiles.addAll(
+                listOf(
+                    getDefaultProguardFile("proguard-android.txt"),
+                    file("proguard-rules.pro")
+                )
             )
             resValue("string", "GOOGLE_MAPS_API_KEY", googleMapsAPIKey)
             applicationIdSuffix = ".debug"
@@ -168,6 +167,9 @@ android {
 
 kapt {
     correctErrorTypes = true
+    arguments {
+        arg("eventBusIndex", "org.owntracks.android.EventBusIndex")
+    }
 }
 
 tasks.withType<Test> {

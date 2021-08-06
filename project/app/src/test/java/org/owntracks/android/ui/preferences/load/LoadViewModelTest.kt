@@ -2,11 +2,13 @@ package org.owntracks.android.ui.preferences.load;
 
 import android.content.Context
 import android.content.res.Resources
+import androidx.arch.core.executor.testing.InstantTaskExecutorRule
 import com.nhaarman.mockitokotlin2.doReturn
 import com.nhaarman.mockitokotlin2.mock
 import org.greenrobot.eventbus.EventBus
 import org.junit.Assert.assertEquals
 import org.junit.Before
+import org.junit.Rule
 import org.junit.Test
 import org.owntracks.android.support.InMemoryPreferencesStore
 import org.owntracks.android.support.Parser
@@ -20,6 +22,10 @@ class LoadViewModelTest {
     private lateinit var mockContext: Context
     private lateinit var preferencesStore: PreferencesStore
     private val eventBus: EventBus = mock {}
+
+
+    @get:Rule
+    val rule = InstantTaskExecutorRule()
 
     @Before
     fun createMocks() {
@@ -39,7 +45,11 @@ class LoadViewModelTest {
         val vm = LoadViewModel(preferences, parser, InMemoryWaypointsRepo(eventBus))
 
         vm.extractPreferences(URI("owntracks:///config?inline=e30k"))
-        assertEquals("""Import failed: Message is not a valid configuration message""", vm.displayedConfiguration)
+        assertEquals("", vm.displayedConfiguration.value)
+        assertEquals(
+            """Message is not a valid configuration message""",
+            vm.importError.value
+        )
     }
 }
 
