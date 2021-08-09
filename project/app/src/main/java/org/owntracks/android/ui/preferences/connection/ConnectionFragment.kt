@@ -40,14 +40,11 @@ class ConnectionFragment : AbstractPreferenceFragment() {
 
     @SuppressLint("ResourceType")
     override fun onCreatePreferencesFix(savedInstanceState: Bundle?, rootKey: String?) {
-        super.onCreatePreferencesFix(savedInstanceState, rootKey)
-
         setPreferencesFromResource(R.xml.preferences_connection, rootKey)
 
         findPreference<Preference>(getString(R.string.preferenceKeyModeId))?.setOnPreferenceChangeListener { _, newValue ->
             preferences.mode = newValue.toString().toInt()
             setPreferenceVisibilityBasedOnMode(preferences.mode)
-            setSharedPreferenceNameToCurrentSharedPreferences()
             true
         }
 
