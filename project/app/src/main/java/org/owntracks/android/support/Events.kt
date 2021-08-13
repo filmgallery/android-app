@@ -11,7 +11,6 @@ class Events {
 
     class ModeChanged(val newModeId: Int) : E()
     class MonitoringChanged : E()
-    class EndpointChanged : E()
     class PermissionGranted(val permission: String) : E()
 
     open class WaypointEvent internal constructor(val waypointModel: WaypointModel) : E()
