@@ -68,6 +68,7 @@ public class LocationProcessor {
 
         assert currentLocation != null;
         if (ignoreLowAccuracy(currentLocation)) {
+            Timber.d("Ignoring location %s,%s as below accuracy threshold: %s", currentLocation.getLatitude(), currentLocation.getLongitude(), currentLocation.getAccuracy());
             return;
         }
 

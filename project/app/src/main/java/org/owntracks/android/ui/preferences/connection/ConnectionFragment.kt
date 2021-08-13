@@ -161,7 +161,8 @@ class ConnectionFragment : AbstractPreferenceFragment() {
                 )
             }
             getString(R.string.preferenceKeyKeepalive) -> {
-                val minimumKeepalive = if (preferences.isExperimentalFeatureEnabled(Preferences.EXPERIMENTAL_FEATURE_ALLOW_SMALL_KEEPALIVE)) 1 else preferences.minimumKeepalive
+                val minimumKeepalive =
+                    if (preferences.isExperimentalFeatureEnabled(Preferences.EXPERIMENTAL_FEATURE_ALLOW_SMALL_KEEPALIVE)) 1 else preferences.minimumKeepalive
                 displayPreferenceDialog(
                     ValidatingEditTextPreferenceDialogFragmentCompat(
                         errorMessage = R.string.preferencesKeepaliveValidationError,
