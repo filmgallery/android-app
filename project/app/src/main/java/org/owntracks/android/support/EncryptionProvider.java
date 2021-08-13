@@ -1,6 +1,9 @@
 package org.owntracks.android.support;
 
 
+import static org.libsodium.jni.SodiumConstants.XSALSA20_POLY1305_SECRETBOX_KEYBYTES;
+import static org.libsodium.jni.SodiumConstants.XSALSA20_POLY1305_SECRETBOX_NONCEBYTES;
+
 import android.content.SharedPreferences;
 import android.util.Base64;
 
@@ -9,18 +12,14 @@ import androidx.annotation.NonNull;
 import org.libsodium.jni.crypto.Random;
 import org.libsodium.jni.crypto.SecretBox;
 import org.owntracks.android.R;
-import javax.inject.Singleton;
-import org.owntracks.android.support.preferences.OnModeChangedPreferenceChangedListener;
 
 import javax.inject.Inject;
+import javax.inject.Singleton;
 
 import timber.log.Timber;
 
-import static org.libsodium.jni.SodiumConstants.XSALSA20_POLY1305_SECRETBOX_KEYBYTES;
-import static org.libsodium.jni.SodiumConstants.XSALSA20_POLY1305_SECRETBOX_NONCEBYTES;
-
 @Singleton
-public class EncryptionProvider {
+public class EncryptionProvider implements SharedPreferences.OnSharedPreferenceChangeListener {
     private static final int crypto_secretbox_NONCEBYTES = XSALSA20_POLY1305_SECRETBOX_NONCEBYTES;
     private static final int crypto_secretbox_KEYBYTES = XSALSA20_POLY1305_SECRETBOX_KEYBYTES;
 
@@ -45,13 +44,13 @@ public class EncryptionProvider {
         byte[] encryptionKeyBytes = encryptionKey != null ? encryptionKey.getBytes() : new byte[0];
         byte[] encryptionKeyBytesPadded = new byte[crypto_secretbox_KEYBYTES];
 
-        if (encryptionKeyBytes.length == 0 ) {
+        if (encryptionKeyBytes.length == 0) {
             Timber.e("encryption key is too short or too long. Has %s bytes", encryptionKeyBytes.length);
             enabled = false;
             return;
         }
         int copyBytes = encryptionKeyBytes.length;
-        if( copyBytes > crypto_secretbox_KEYBYTES) {
+        if (copyBytes > crypto_secretbox_KEYBYTES) {
             copyBytes = crypto_secretbox_KEYBYTES;
         }
 
@@ -64,7 +63,7 @@ public class EncryptionProvider {
     @Inject
     public EncryptionProvider(Preferences preferences) {
         this.preferences = preferences;
-        preferences.registerOnPreferenceChangedListener(new SecretBoxManager());
+        preferences.registerOnPreferenceChangedListener(this);
         initializeSecretBox();
     }
 
@@ -93,20 +92,9 @@ public class EncryptionProvider {
         return Base64.encodeToString(out, Base64.NO_WRAP);
     }
 
-    private class SecretBoxManager implements OnModeChangedPreferenceChangedListener {
-        SecretBoxManager() {
-            preferences.registerOnPreferenceChangedListener(this);
-        }
-
-        @Override
-        public void onAttachAfterModeChanged() {
+    @Override
+    public void onSharedPreferenceChanged(SharedPreferences sharedPreferences, String key) {
+        if (preferences.getPreferenceKey(R.string.preferenceKeyEncryptionKey).equals(key))
             initializeSecretBox();
-        }
-
-        @Override
-        public void onSharedPreferenceChanged(SharedPreferences sharedPreferences, String key) {
-            if (preferences.getPreferenceKey(R.string.preferenceKeyEncryptionKey).equals(key))
-                initializeSecretBox();
-        }
     }
 }

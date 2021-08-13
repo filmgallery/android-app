@@ -1,6 +1,7 @@
 package org.owntracks.android.support.preferences
 
 import android.content.Context
+import android.content.SharedPreferences
 import android.os.Build
 import androidx.preference.PreferenceManager
 import dagger.hilt.android.qualifiers.ApplicationContext
@@ -21,8 +22,8 @@ class SharedPreferencesStore @Inject constructor(@ApplicationContext private val
         migrateToSingleSharedPreferences()
     }
 
+    @Suppress("UNCHECKED_CAST")
     private fun migrateToSingleSharedPreferences() {
-
         val oldSharedPreferenceNames = listOf(
             "org.owntracks.android.preferences.private",
             "org.owntracks.android.preferences.http"
@@ -97,11 +98,11 @@ class SharedPreferencesStore @Inject constructor(@ApplicationContext private val
         return sharedPreferences.contains(key)
     }
 
-    override fun registerOnSharedPreferenceChangeListener(listenerModeChanged: OnModeChangedPreferenceChangedListener) {
+    override fun registerOnSharedPreferenceChangeListener(listenerModeChanged: SharedPreferences.OnSharedPreferenceChangeListener) {
         sharedPreferences.registerOnSharedPreferenceChangeListener(listenerModeChanged)
     }
 
-    override fun unregisterOnSharedPreferenceChangeListener(listenerModeChanged: OnModeChangedPreferenceChangedListener) {
+    override fun unregisterOnSharedPreferenceChangeListener(listenerModeChanged: SharedPreferences.OnSharedPreferenceChangeListener) {
         sharedPreferences.unregisterOnSharedPreferenceChangeListener(listenerModeChanged)
     }
 }

@@ -1,5 +1,12 @@
 package org.owntracks.android.services;
 
+import static android.os.Process.killProcess;
+import static android.os.Process.myPid;
+import static androidx.core.app.NotificationCompat.PRIORITY_LOW;
+import static org.owntracks.android.App.NOTIFICATION_CHANNEL_EVENTS;
+import static org.owntracks.android.App.NOTIFICATION_CHANNEL_ONGOING;
+import static org.owntracks.android.geocoding.GeocoderProvider.ERROR_NOTIFICATION_CHANNEL_ID;
+
 import android.Manifest;
 import android.app.Notification;
 import android.app.NotificationManager;
@@ -56,7 +63,6 @@ import org.owntracks.android.support.Events;
 import org.owntracks.android.support.Preferences;
 import org.owntracks.android.support.RunThingsOnOtherThreads;
 import org.owntracks.android.support.ServiceBridge;
-import org.owntracks.android.support.preferences.OnModeChangedPreferenceChangedListener;
 import org.owntracks.android.ui.map.MapActivity;
 
 import java.util.Date;
@@ -69,15 +75,8 @@ import javax.inject.Inject;
 import dagger.hilt.android.AndroidEntryPoint;
 import timber.log.Timber;
 
-import static android.os.Process.killProcess;
-import static android.os.Process.myPid;
-import static androidx.core.app.NotificationCompat.PRIORITY_LOW;
-import static org.owntracks.android.App.NOTIFICATION_CHANNEL_EVENTS;
-import static org.owntracks.android.App.NOTIFICATION_CHANNEL_ONGOING;
-import static org.owntracks.android.geocoding.GeocoderProvider.ERROR_NOTIFICATION_CHANNEL_ID;
-
 @AndroidEntryPoint
-public class BackgroundService extends LifecycleService implements OnModeChangedPreferenceChangedListener, ServiceBridge.ServiceBridgeInterface {
+public class BackgroundService extends LifecycleService implements SharedPreferences.OnSharedPreferenceChangeListener, ServiceBridge.ServiceBridgeInterface {
     private static final int INTENT_REQUEST_CODE_GEOFENCE = 1264;
     private static final int INTENT_REQUEST_CODE_CLEAR_EVENTS = 1263;
 
@@ -199,8 +198,6 @@ public class BackgroundService extends LifecycleService implements OnModeChanged
         setupGeofences();
 
         eventBus.register(this);
-
-        messageProcessor.initialize();
 
         preferences.registerOnPreferenceChangedListener(this);
     }
@@ -733,11 +730,6 @@ public class BackgroundService extends LifecycleService implements OnModeChanged
         }
 
         return eventsNotificationCompatBuilder;
-    }
-
-    @Override
-    public void onAttachAfterModeChanged() {
-        //NOOP. Handled through eventbus
     }
 
     @Override

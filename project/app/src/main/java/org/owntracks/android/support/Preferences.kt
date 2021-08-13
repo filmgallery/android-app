@@ -2,6 +2,7 @@ package org.owntracks.android.support
 
 import android.annotation.SuppressLint
 import android.content.Context
+import android.content.SharedPreferences
 import android.os.Build
 import android.os.Build.VERSION.SDK_INT
 import androidx.annotation.IntegerRes
@@ -21,7 +22,6 @@ import org.owntracks.android.services.MessageProcessorEndpointMqtt
 import org.owntracks.android.services.worker.Scheduler
 import org.owntracks.android.support.Events.ModeChanged
 import org.owntracks.android.support.Events.MonitoringChanged
-import org.owntracks.android.support.preferences.OnModeChangedPreferenceChangedListener
 import org.owntracks.android.support.preferences.PreferenceDataStoreShim
 import timber.log.Timber
 import java.lang.reflect.InvocationTargetException
@@ -39,9 +39,9 @@ class Preferences @Inject constructor(
     private val eventBus: EventBus?,
     private val preferencesStore: PreferenceDataStoreShim
 ) {
+
     private val context: Context = applicationContext
     private var isFirstStart = false
-    private var currentMode = MessageProcessorEndpointMqtt.MODE_ID
 
     // need to iterated thought hierarchy in order to retrieve methods from above the current instance
     // iterate though the list of methods declared in the class represented by klass variable, and insert those annotated with the specified annotation
@@ -53,8 +53,8 @@ class Preferences @Inject constructor(
             .filter {
                 val annotation = it.getAnnotation(Export::class.java)
                 annotation != null &&
-                        (currentMode == MessageProcessorEndpointMqtt.MODE_ID && annotation.exportModeMqtt ||
-                                currentMode == MessageProcessorEndpointHttp.MODE_ID && annotation.exportModeHttp)
+                        (mode == MessageProcessorEndpointMqtt.MODE_ID && annotation.exportModeMqtt ||
+                                mode == MessageProcessorEndpointHttp.MODE_ID && annotation.exportModeHttp)
             }
             .map { Pair(getPreferenceKey(it.getAnnotation(Export::class.java)!!.keyResId), it) }
             .toMap()
@@ -84,12 +84,15 @@ class Preferences @Inject constructor(
         }
     }
 
-    fun registerOnPreferenceChangedListener(listener: OnModeChangedPreferenceChangedListener?) {
-        preferencesStore.registerOnSharedPreferenceChangeListener(listener!!)
+    // SharedPreferencesImpl stores its listeners as a list of WeakReferences. So we shouldn't use a
+    // lambda as a listener, as that'll just get GC'd and then mysteriously disappear
+    // https://stackoverflow.com/a/3104265/352740
+    fun registerOnPreferenceChangedListener(listener: SharedPreferences.OnSharedPreferenceChangeListener) {
+        preferencesStore.registerOnSharedPreferenceChangeListener(listener)
     }
 
-    fun unregisterOnPreferenceChangedListener(listener: OnModeChangedPreferenceChangedListener?) {
-        preferencesStore.unregisterOnSharedPreferenceChangeListener(listener!!)
+    fun unregisterOnPreferenceChangedListener(listener: SharedPreferences.OnSharedPreferenceChangeListener) {
+        preferencesStore.unregisterOnSharedPreferenceChangeListener(listener)
     }
 
     fun checkFirstStart() {
@@ -189,21 +192,19 @@ class Preferences @Inject constructor(
     }
 
     private fun setMode(requestedMode: Int, init: Boolean) {
-        Timber.v("setMode: %s", requestedMode)
         if (!(requestedMode == MessageProcessorEndpointMqtt.MODE_ID || requestedMode == MessageProcessorEndpointHttp.MODE_ID)) {
-            Timber.v("Invalid mode requested: %s", requestedMode)
+            Timber.w("Invalid mode requested: %s", requestedMode)
             return
         }
-        if (!init && currentMode == requestedMode) {
+        if (!init && mode == requestedMode) {
             Timber.v("mode is already set to requested mode")
             return
         }
-        Timber.v("setting mode to: %s", requestedMode)
+        Timber.v("setting mode to: $requestedMode")
         preferencesStore.putInt(getPreferenceKey(R.string.preferenceKeyModeId), requestedMode)
-        currentMode = requestedMode
         if (!init && eventBus != null) {
             Timber.v("broadcasting mode change event")
-            eventBus.post(ModeChanged(currentMode))
+            eventBus.post(ModeChanged(requestedMode))
         }
     }
 
@@ -225,7 +226,7 @@ class Preferences @Inject constructor(
     )
     @set:Import(keyResId = R.string.preferenceKeyModeId)
     var mode: Int
-        get() = currentMode
+        get() = getIntOrDefault(R.string.preferenceKeyModeId, R.integer.valModeId)
         set(active) {
             setMode(active, false)
         }
@@ -418,7 +419,10 @@ class Preferences @Inject constructor(
     )
     @set:Import(keyResId = R.string.preferenceKeyMqttConnectionTimeout)
     var mqttConnectionTimeout: Int
-        get() = getIntOrDefault(R.string.preferenceKeyMqttConnectionTimeout, R.integer.defaultMqttTimeout)
+        get() = getIntOrDefault(
+            R.string.preferenceKeyMqttConnectionTimeout,
+            R.integer.defaultMqttTimeout
+        )
         set(timeoutInSeconds) {
             setInt(R.string.preferenceKeyMqttConnectionTimeout, timeoutInSeconds)
         }
@@ -568,11 +572,7 @@ class Preferences @Inject constructor(
 
     val minimumKeepalive = TimeUnit.MILLISECONDS.toSeconds(Scheduler.MIN_PERIODIC_INTERVAL_MILLIS)
 
-    val keepaliveWithHintSupport: String
-        get() = getIntWithHintSupport(R.string.preferenceKeyKeepalive)
-
-
-    fun setKeepaliveDefault() {
+    private fun setKeepaliveDefault() {
         clearKey(R.string.preferenceKeyKeepalive)
     }
 
@@ -765,12 +765,9 @@ class Preferences @Inject constructor(
     @set:Import(keyResId = R.string.preferenceKeyURL)
     var url: String
         get() {
-            val url = getStringOrDefault(R.string.preferenceKeyURL, R.string.valEmpty)
-            Timber.e("Getting URL value = $url, pref hashcode = ${this.hashCode()}")
-            return url
+            return getStringOrDefault(R.string.preferenceKeyURL, R.string.valEmpty)
         }
         set(url) {
-            Timber.e("Setting URL value = $url, pref hashcode = ${this.hashCode()}")
             setString(R.string.preferenceKeyURL, url)
         }
 
@@ -1003,15 +1000,6 @@ class Preferences @Inject constructor(
 
     private fun getIntResource(@IntegerRes resId: Int): Int {
         return context.resources.getInteger(resId)
-    }
-
-    private fun getIntWithHintSupport(@StringRes resKeyId: Int): String {
-        val i = getIntOrDefault(resKeyId, R.integer.valInvalid)
-        return if (i == -1) {
-            ""
-        } else {
-            i.toString()
-        }
     }
 
     private fun getStringOrDefault(@StringRes resKeyId: Int, defId: Int): String {
