@@ -261,6 +261,7 @@ dependencies {
         exclude("org.jetbrains.kotlin")
     }
     androidTestImplementation("com.squareup.okhttp3:mockwebserver:${okHttpVersion}")
+    androidTestImplementation("com.github.davidepianca98.KMQTT:kmqtt:0.2.9")
 
     androidTestImplementation("androidx.test:rules:${androidxTestVersion}")
     androidTestImplementation("androidx.test:runner:${androidxTestVersion}")
