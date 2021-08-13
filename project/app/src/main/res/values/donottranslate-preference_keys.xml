@@ -26,6 +26,7 @@
     <string name="preferenceKeyMonitoring">monitoring</string>
     <string name="preferenceKeyMoveModeLocatorInterval">moveModeLocatorInterval</string>
     <string name="preferenceKeyMqttProtocolLevel">mqttProtocolLevel</string>
+    <string name="preferenceKeyMqttConnectionTimeout">mqttConnectionTimeout</string>
     <string name="preferenceKeyNotificationEvents">notificationEvents</string>
     <string name="preferenceKeyNotificationHigherPriority">notificationHigherPriority</string>
     <string name="preferenceKeyNotificationLocation">notificationLocation</string>

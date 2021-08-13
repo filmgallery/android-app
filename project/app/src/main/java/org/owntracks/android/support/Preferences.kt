@@ -411,6 +411,17 @@ class Preferences @Inject constructor(
             setInt(R.string.preferenceKeyIgnoreInaccurateLocations, meters)
         }
 
+    @get:Export(
+        keyResId = R.string.preferenceKeyMqttConnectionTimeout,
+        exportModeMqtt = true,
+        exportModeHttp = false
+    )
+    @set:Import(keyResId = R.string.preferenceKeyMqttConnectionTimeout)
+    var mqttConnectionTimeout: Int
+        get() = getIntOrDefault(R.string.preferenceKeyMqttConnectionTimeout, R.integer.defaultMqttTimeout)
+        set(timeoutInSeconds) {
+            setInt(R.string.preferenceKeyMqttConnectionTimeout, timeoutInSeconds)
+        }
 
     @get:Export(keyResId = R.string.preferenceKeyClientId, exportModeMqtt = true)
     @set:Import(keyResId = R.string.preferenceKeyClientId)

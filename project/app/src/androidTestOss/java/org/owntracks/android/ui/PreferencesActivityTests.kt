@@ -124,6 +124,7 @@ class PreferencesActivityTests :
         assertContains(R.id.effectiveConfiguration, "\"subTopic\" : \"owntracks/+/+\"")
         assertContains(R.id.effectiveConfiguration, "\"pubTopicBase\" : \"owntracks/%u/%d\"")
         assertContains(R.id.effectiveConfiguration, "\"ws\" : true")
+        assertContains(R.id.effectiveConfiguration, "\"mqttConnectionTimeout\" : 5")
 
         assertNotContains(R.id.effectiveConfiguration, "\"url\"")
         assertNotContains(R.id.effectiveConfiguration, "\"preferenceKeyDontReuseHttpClient\"")
@@ -201,6 +202,7 @@ class PreferencesActivityTests :
         assertNotContains(R.id.effectiveConfiguration, "\"subTopic\"")
         assertNotContains(R.id.effectiveConfiguration, "\"pubTopicBase\"")
         assertNotContains(R.id.effectiveConfiguration, "\"clientId\"")
+        assertNotContains(R.id.effectiveConfiguration, "\"mqttConnectionTimeout\"")
     }
 
     @Test

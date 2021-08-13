@@ -360,7 +360,7 @@ public class MessageProcessorEndpointMqtt extends MessageProcessorEndpoint imple
         setWill(connectOptions);
 
         connectOptions.setKeepAliveInterval(preferences.getKeepalive());
-        connectOptions.setConnectionTimeout(30);
+        connectOptions.setConnectionTimeout(preferences.getMqttConnectionTimeout());
 
         connectOptions.setCleanSession(preferences.getCleanSession());
         return connectOptions;
