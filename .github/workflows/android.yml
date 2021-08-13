@@ -118,7 +118,8 @@ jobs:
           arch: x86_64
           sdcard-path-or-size: 1000M
       - run: |
-          find -name logcat
+          find . -name logcat
+        if: ${{ failure() }}
       - name: Upload logcat
         uses: actions/upload-artifact@v2
         with:
@@ -173,7 +174,8 @@ jobs:
           arch: x86_64
           sdcard-path-or-size: 1000M
       - run: |
-          find -name logcat
+          find . -name logcat
+        if: ${{ failure() }}
       - name: Upload logcat
         uses: actions/upload-artifact@v2
         with:
