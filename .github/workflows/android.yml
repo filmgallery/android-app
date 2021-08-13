@@ -117,6 +117,8 @@ jobs:
           disable-animations: true
           arch: x86_64
           sdcard-path-or-size: 1000M
+      - run: |
+          find -name logcat
       - name: Upload logcat
         uses: actions/upload-artifact@v2
         with:
@@ -170,6 +172,8 @@ jobs:
           disable-animations: true
           arch: x86_64
           sdcard-path-or-size: 1000M
+      - run: |
+          find -name logcat
       - name: Upload logcat
         uses: actions/upload-artifact@v2
         with:
