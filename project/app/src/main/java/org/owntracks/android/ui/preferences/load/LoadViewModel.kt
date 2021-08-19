@@ -4,7 +4,10 @@ import android.content.ContentResolver
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 import okhttp3.*
 import org.apache.commons.codec.binary.Base64
 import org.apache.hc.core5.net.URIBuilder
@@ -44,26 +47,29 @@ class LoadViewModel @Inject constructor(
     private fun setConfiguration(json: String) {
         val message = parser.fromJson(json.toByteArray())
         if (message is MessageConfiguration) {
-            configuration = parser.fromJson(json.toByteArray()) as MessageConfiguration
-            val prettyConfiguration: String = try {
-                parser.toUnencryptedJsonPretty(configuration!!)
+            configuration = message
+            try {
+                mutableConfig.postValue(parser.toUnencryptedJsonPretty(message))
+                mutableImportStatus.postValue(ImportStatus.SUCCESS)
             } catch (e: IOException) {
-                Timber.e(e)
-                "Unable to parse configuration"
+                configurationImportFailed(e)
             }
-            mutableConfig.postValue(prettyConfiguration)
-            mutableImportStatus.postValue(ImportStatus.SUCCESS)
         } else {
             throw IOException("Message is not a valid configuration message")
         }
     }
 
     fun saveConfiguration() {
-        preferences.importFromMessage(configuration!!)
-        if (!configuration!!.waypoints.isEmpty()) {
-            waypointsRepo.importFromMessage(configuration!!.waypoints)
+        viewModelScope.launch(Dispatchers.IO) {
+            mutableImportStatus.postValue(ImportStatus.LOADING)
+            configuration?.run {
+                preferences.importFromMessage(this)
+                if (!waypoints.isEmpty()) {
+                    waypointsRepo.importFromMessage(waypoints)
+                }
+            }
+            mutableImportStatus.postValue(ImportStatus.SAVED)
         }
-        mutableImportStatus.postValue(ImportStatus.SAVED)
     }
 
     fun extractPreferences(content: ByteArray) {
