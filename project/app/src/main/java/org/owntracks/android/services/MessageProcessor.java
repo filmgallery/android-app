@@ -315,7 +315,7 @@ public class MessageProcessor implements SharedPreferences.OnSharedPreferenceCha
     }
 
     void onEndpointStateChanged(EndpointState newState) {
-        Timber.d("message:%s, ", newState.getMessage());
+        Timber.d("message: %s %s %s", newState, newState.getMessage(), Thread.currentThread());
         endpointStateRepo.setState(newState);
     }
 

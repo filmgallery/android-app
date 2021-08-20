@@ -5,7 +5,6 @@ import android.content.Context;
 import androidx.work.BackoffPolicy;
 import androidx.work.Constraints;
 import androidx.work.NetworkType;
-import androidx.work.OneTimeWorkRequest;
 import androidx.work.PeriodicWorkRequest;
 import androidx.work.WorkManager;
 import androidx.work.WorkRequest;
@@ -89,23 +88,5 @@ public class Scheduler {
         Timber.d("WorkManager queue task %s as %s with interval %s minutes", PERIODIC_TASK_SEND_LOCATION_PING, pingWorkRequest.getId(), preferences.getPing());
         WorkManager.getInstance(this.context).cancelAllWorkByTag(PERIODIC_TASK_SEND_LOCATION_PING);
         WorkManager.getInstance(this.context).enqueue(pingWorkRequest);
-    }
-
-    public void scheduleMqttReconnect() {
-        WorkRequest mqttReconnectWorkRequest =
-                new OneTimeWorkRequest.Builder(MQTTReconnectWorker.class)
-                        .addTag(ONETIME_TASK_MQTT_RECONNECT)
-                        .setBackoffCriteria(BackoffPolicy.LINEAR, 5, TimeUnit.SECONDS)
-                        .setConstraints(anyNetworkConstraint)
-                        .build();
-
-        Timber.d("WorkManager queue task %s as %s", ONETIME_TASK_MQTT_RECONNECT, mqttReconnectWorkRequest.getId());
-        WorkManager.getInstance(this.context).cancelAllWorkByTag(ONETIME_TASK_MQTT_RECONNECT);
-        WorkManager.getInstance(this.context).enqueue(mqttReconnectWorkRequest);
-    }
-
-    public void cancelMqttReconnect() {
-        Timber.d("Cancelling task tag %s threadID: %s", ONETIME_TASK_MQTT_RECONNECT, Thread.currentThread());
-        WorkManager.getInstance(this.context).cancelAllWorkByTag(ONETIME_TASK_MQTT_RECONNECT);
     }
 }

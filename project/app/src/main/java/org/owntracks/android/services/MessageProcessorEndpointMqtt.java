@@ -12,11 +12,10 @@ import androidx.annotation.WorkerThread;
 import org.eclipse.paho.client.mqttv3.IMqttDeliveryToken;
 import org.eclipse.paho.client.mqttv3.MqttAsyncClient;
 import org.eclipse.paho.client.mqttv3.MqttCallbackExtended;
-import org.eclipse.paho.client.mqttv3.MqttClientPersistence;
 import org.eclipse.paho.client.mqttv3.MqttConnectOptions;
 import org.eclipse.paho.client.mqttv3.MqttException;
 import org.eclipse.paho.client.mqttv3.MqttMessage;
-import org.eclipse.paho.client.mqttv3.MqttPersistable;
+import org.eclipse.paho.client.mqttv3.persist.MqttDefaultFilePersistence;
 import org.greenrobot.eventbus.EventBus;
 import org.jetbrains.annotations.NotNull;
 import org.json.JSONException;
@@ -49,8 +48,7 @@ import java.security.cert.CertificateException;
 import java.security.cert.CertificateFactory;
 import java.security.cert.X509Certificate;
 import java.util.Arrays;
-import java.util.Enumeration;
-import java.util.Hashtable;
+import java.util.Random;
 import java.util.Set;
 import java.util.TreeSet;
 import java.util.concurrent.Semaphore;
@@ -61,27 +59,25 @@ import timber.log.Timber;
 public class MessageProcessorEndpointMqtt extends MessageProcessorEndpoint implements StatefulServiceMessageProcessor, SharedPreferences.OnSharedPreferenceChangeListener {
     public static final int MODE_ID = 0;
 
-    private CustomMqttClient mqttClient;
+    private MqttAsyncClient mqttClient;
 
     private String lastConnectionId;
-    private static EndpointState state;
+    private EndpointState state;
 
-    private MessageProcessor messageProcessor;
-    private RunThingsOnOtherThreads runThingsOnOtherThreads;
-    private Context applicationContext;
+    private final MessageProcessor messageProcessor;
+    private final RunThingsOnOtherThreads runThingsOnOtherThreads;
+    private final Context applicationContext;
     private final ContactsRepo contactsRepo;
 
-    private Parser parser;
-    private Preferences preferences;
-    private Scheduler scheduler;
-    private EventBus eventBus;
+    private final Parser parser;
+    private final Preferences preferences;
+    private final Scheduler scheduler;
 
     MessageProcessorEndpointMqtt(MessageProcessor messageProcessor, Parser parser, Preferences preferences, Scheduler scheduler, EventBus eventBus, RunThingsOnOtherThreads runThingsOnOtherThreads, Context applicationContext, ContactsRepo contactsRepo) {
         super(messageProcessor);
         this.parser = parser;
         this.preferences = preferences;
         this.scheduler = scheduler;
-        this.eventBus = eventBus;
         this.messageProcessor = messageProcessor;
         this.runThingsOnOtherThreads = runThingsOnOtherThreads;
         this.applicationContext = applicationContext;
@@ -99,9 +95,12 @@ public class MessageProcessorEndpointMqtt extends MessageProcessorEndpoint imple
         try {
             if (!checkConnection()) {
                 reconnect();
-            }
-            if (checkConnection()) {
-                mqttClient.ping();
+            } else {
+                try {
+                    mqttClient.checkPing(null, null);
+                } catch (MqttException e) {
+                    Timber.e(e, "Couldn't send MQTT Ping");
+                }
             }
         } finally {
             if (completionNotifier != null) {
@@ -159,10 +158,9 @@ public class MessageProcessorEndpointMqtt extends MessageProcessorEndpoint imple
 
         @Override
         public void connectionLost(Throwable cause) {
-            Timber.e(cause, "connectionLost error");
+            Timber.e(cause, "connectionLost handler %s", Thread.currentThread());
             scheduler.cancelMqttPing();
             changeState(EndpointState.DISCONNECTED.withError(cause));
-            scheduler.scheduleMqttReconnect();
         }
 
         @Override
@@ -192,7 +190,7 @@ public class MessageProcessorEndpointMqtt extends MessageProcessorEndpoint imple
         }
     };
 
-    private CustomMqttClient buildMqttClient() throws URISyntaxException, MqttException {
+    private MqttAsyncClient buildMqttClient() throws URISyntaxException, MqttException {
         Timber.d("Initializing new mqttClient");
 
         String scheme = "tcp";
@@ -207,11 +205,12 @@ public class MessageProcessorEndpointMqtt extends MessageProcessorEndpoint imple
         }
 
         String cid = preferences.getClientId();
+        cid = Integer.valueOf(new Random().nextInt(0X1000000)).toString();
 
         String connectString = new URI(scheme, null, preferences.getHost(), preferences.getPort(), null, null, null).toString();
         Timber.d("client id :%s, connect string: %s", cid, connectString);
         try {
-            CustomMqttClient mqttClient = new CustomMqttClient(connectString, cid, new MqttClientMemoryPersistence());
+            MqttAsyncClient mqttClient = new MqttAsyncClient(connectString, cid, new MqttDefaultFilePersistence(applicationContext.getFilesDir().toString()));
             mqttClient.setCallback(iCallbackClient);
             return mqttClient;
         } catch (IllegalArgumentException e) {
@@ -230,7 +229,7 @@ public class MessageProcessorEndpointMqtt extends MessageProcessorEndpoint imple
 
         if (isConnected()) {
             Timber.d("already connected to broker");
-            changeState(getState()); // Background service might be restarted and not get the connection state
+            changeState(state); // Background service might be restarted and not get the connection state
             return;
         }
 
@@ -270,12 +269,6 @@ public class MessageProcessorEndpointMqtt extends MessageProcessorEndpoint imple
             changeState(EndpointState.ERROR.withError(e));
             throw new MqttConnectionException(e);
         }
-        Timber.d("MQTT Connected success.");
-        scheduler.scheduleMqttMaybeReconnectAndPing(mqttConnectOptions.getKeepAliveInterval());
-
-        changeState(EndpointState.CONNECTED);
-
-        sendMessageConnectPressure = 0; // allow new connection attempts from queueMessageForSending
     }
 
     private MqttConnectOptions getMqttConnectOptions() throws MqttConnectionException {
@@ -361,7 +354,7 @@ public class MessageProcessorEndpointMqtt extends MessageProcessorEndpoint imple
 
         connectOptions.setKeepAliveInterval(preferences.getKeepalive());
         connectOptions.setConnectionTimeout(preferences.getMqttConnectionTimeout());
-
+        connectOptions.setAutomaticReconnect(true);
         connectOptions.setCleanSession(preferences.getCleanSession());
         return connectOptions;
     }
@@ -385,8 +378,14 @@ public class MessageProcessorEndpointMqtt extends MessageProcessorEndpoint imple
     }
 
     private void onConnect() {
-        Timber.d("MQTT connected!. Running onconnect handler (threadID %s)", Thread.currentThread());
-        scheduler.cancelMqttReconnect();
+        Timber.d("Running onconnect handler %s", Thread.currentThread());
+
+        scheduler.scheduleMqttMaybeReconnectAndPing(preferences.getKeepalive());
+
+        changeState(EndpointState.CONNECTED);
+
+        sendMessageConnectPressure = 0; // allow new connection attempts from queueMessageForSending
+
         // Check if we're connecting to the same broker that we were already connected to
         String connectionId = getConnectionId();
         if (lastConnectionId != null && !connectionId.equals(lastConnectionId)) {
@@ -451,46 +450,26 @@ public class MessageProcessorEndpointMqtt extends MessageProcessorEndpoint imple
         return qos;
     }
 
-    private void unsubscribe(String[] topics) {
-        if (!isConnected()) {
-            Timber.e("subscribe when not connected");
-            return;
-        }
-
-        for (String s : topics) {
-            Timber.v("unsubscribe() - Will unsubscribe from: %s", s);
-        }
-
-        try {
-            mqttClient.unsubscribe(topics);
-        } catch (Exception e) {
-            Timber.e(e, "Unable to unsubscribe from topics");
-        }
-    }
-
-    private void disconnect(boolean fromUser) {
-        Timber.d("disconnect. Manually triggered? %s. ThreadID: %s", fromUser, Thread.currentThread());
+    private void disconnect() {
+        Timber.d("disconnect %s", Thread.currentThread());
         if (isConnecting()) {
             return;
         }
 
         try {
             if (isConnected()) {
-                Timber.d("Disconnecting");
-                this.mqttClient.disconnect(0);
+                Timber.d("MQTT client is currently connected. Disconnecting");
+                this.mqttClient.disconnect(0).waitForCompletion();
+                Timber.d("Disconnected");
             }
 
         } catch (MqttException e) {
             Timber.e(e, "Error disconnecting from broker");
         } finally {
+            Timber.d("Nulling mqtt client. %s", Thread.currentThread());
             this.mqttClient = null;
-
-            if (fromUser)
-                changeState(EndpointState.DISCONNECTED_USERDISCONNECT);
-            else
-                changeState(EndpointState.DISCONNECTED);
+            changeState(EndpointState.DISCONNECTED);
             scheduler.cancelMqttPing();
-            scheduler.cancelMqttReconnect();
         }
     }
 
@@ -500,11 +479,13 @@ public class MessageProcessorEndpointMqtt extends MessageProcessorEndpoint imple
 
     public void reconnect(Semaphore completionNotifier) {
         if (!Thread.currentThread().getName().equals(NETWORK_HANDLER_THREAD_NAME)) {
+            Timber.d("Reconnecting on networkhandler");
             runThingsOnOtherThreads.postOnNetworkHandlerDelayed(() -> reconnect(completionNotifier), 0);
             return;
         }
+
         if (isConnected() || isConnecting()) {
-            disconnect(false);
+            disconnect();
         }
         try {
             connectToBroker();
@@ -515,11 +496,7 @@ public class MessageProcessorEndpointMqtt extends MessageProcessorEndpoint imple
                 completionNotifier.release();
             }
         }
-    }
 
-    @Override
-    public void disconnect() {
-        disconnect(true);
     }
 
     @Override
@@ -551,13 +528,10 @@ public class MessageProcessorEndpointMqtt extends MessageProcessorEndpoint imple
         return (this.mqttClient != null) && (state == EndpointState.CONNECTING);
     }
 
-    private static EndpointState getState() {
-        return state;
-    }
 
     @Override
     public void onDestroy() {
-        disconnect(false);
+        disconnect();
         scheduler.cancelMqttTasks();
     }
 
@@ -565,7 +539,6 @@ public class MessageProcessorEndpointMqtt extends MessageProcessorEndpoint imple
     public void onCreateFromProcessor() {
         try {
             checkConfigurationComplete();
-            scheduler.scheduleMqttReconnect();
         } catch (ConfigurationIncompleteException e) {
             changeState(EndpointState.ERROR_CONFIGURATION.withError(e));
         }
@@ -589,67 +562,9 @@ public class MessageProcessorEndpointMqtt extends MessageProcessorEndpoint imple
                 preferences.getPreferenceKey(R.string.preferenceKeyWS).equals(key) ||
                 preferences.getPreferenceKey(R.string.preferenceKeyDeviceId).equals(key)
         ) {
-            Timber.d("MQTT preferences changed. Clearing contact repo & Reconnecting to broker. ThreadId: %s", Thread.currentThread());
+            Timber.d("MQTT preferences changed (%s). Clearing contact repo & Reconnecting to broker. ThreadId: %s", key, Thread.currentThread());
             contactsRepo.clearAll();
             reconnect();
-        }
-    }
-
-    private static final class MqttClientMemoryPersistence implements MqttClientPersistence {
-        private static Hashtable<String, MqttPersistable> data;
-
-        @Override
-        public void open(String s, String s2) {
-            if (data == null) {
-                data = new Hashtable<>();
-            }
-        }
-
-        @Override
-        public void close() {
-
-        }
-
-        @Override
-        public void put(String key, MqttPersistable persistable) {
-            data.put(key, persistable);
-        }
-
-        @Override
-        public MqttPersistable get(String key) {
-            return data.get(key);
-        }
-
-        @Override
-        public void remove(String key) {
-            data.remove(key);
-        }
-
-        @Override
-        public Enumeration keys() {
-            return data.keys();
-        }
-
-        @Override
-        public void clear() {
-            data.clear();
-        }
-
-        @Override
-        public boolean containsKey(String key) {
-            return data.containsKey(key);
-        }
-    }
-
-    private static final class CustomMqttClient extends MqttAsyncClient {
-
-        CustomMqttClient(String serverURI, String clientId, MqttClientPersistence persistence) throws MqttException {
-            super(serverURI, clientId, persistence);
-        }
-
-        void ping() {
-            if (comms != null)
-                comms.checkForActivity();
         }
     }
 
